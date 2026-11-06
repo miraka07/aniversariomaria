@@ -918,7 +918,7 @@ const printEls = PRINTS.map((p, i) => {
 });
 const FOCUS_BLUR = 'blur(3px) brightness(.72) saturate(.7)';
 document.querySelectorAll('#wedding img, .fut-bg').forEach(im => { im.onerror = () => placeholder(im); if (im.complete && !im.naturalWidth) placeholder(im); });
-const fut = gsap.timeline({ scrollTrigger: { trigger: '#futuro', start: 'top top', end: '+=' + (PRINTS.length * 450 + 300) + '%', pin: true, scrub: 1, refreshPriority: 70 } });
+const fut = gsap.timeline({ scrollTrigger: { trigger: '#futuro', start: 'top top', end: '+=' + (PRINTS.length * 320 + 260) + '%', pin: true, scrub: 1, refreshPriority: 70 } });
 // o título aparece sozinho, sai, e só então o celular entra (no celular os dois não se sobrepõem)
 fut.to({}, { duration: .5 }) // o título já está na tela quando a seção prende; fica um pouco e sai
    .to('.fut-title', { opacity: 0, y: -60, duration: .6 })
