@@ -82,16 +82,25 @@
   #wedding .w2 { opacity:0; }
 
   .print-note { position:absolute; z-index:4; top:50%; translate:0 -50%; left:calc(50% + min(84vh, 800px) * 9 / 38 + 4vw); width:min(30vw, 420px); text-align:left; border-left:3px solid var(--red); padding:.4rem 0 .4rem 1.4rem; }
-  .print-note p { font-family:"Cormorant Garamond", serif; font-style:italic; font-size:clamp(1.9rem, 3vw, 2.8rem); line-height:1.15; color:var(--ink); }
-  .print-note blockquote { margin-top:1.1rem; font-family:"Cormorant Garamond", serif; font-size:clamp(1.25rem, 1.8vw, 1.6rem); line-height:1.35; color:var(--ink); }
+  .print-note p { font-family:"Cormorant Garamond", serif; font-style:italic; font-size:clamp(1.9rem, 3vw, 2.8rem); line-height:1.15; color:#fff; } /* PC: texto claro sobre o fundo escuro do capítulo 3 */
+  .print-note blockquote { margin-top:1.1rem; font-family:"Cormorant Garamond", serif; font-size:clamp(1.25rem, 1.8vw, 1.6rem); line-height:1.35; color:rgba(255,255,255,.88); }
   .print-note cite { display:block; margin-top:.5rem; font-style:normal; font-weight:700; letter-spacing:.2em; text-transform:uppercase; font-size:.85rem; color:var(--red); }
   .print-note.long p { font-size:clamp(1.5rem, 2.2vw, 2.1rem); line-height:1.25; }
   @media (max-width: 900px) {
     .print-note.long p { font-size:clamp(1.2rem, 4.8vw, 1.45rem); }
     .print-note { top:50%; bottom:auto; left:50%; translate:-50% -50%; width:90vw; text-align:center; border-left:0; border-top:3px solid var(--red); padding:1.1rem 1.3rem; border-radius:16px; background:rgba(255,255,255,.96); box-shadow:0 20px 50px -15px rgba(43,26,29,.45); }
-    .print-note p { font-size:clamp(1.6rem, 6.5vw, 2.1rem); }
+    .print-note p { font-size:clamp(1.6rem, 6.5vw, 2.1rem); color:var(--ink); } /* celular: card branco */
+    .print-note blockquote { color:var(--ink); }
     .print-note blockquote { font-size:1.15rem; margin-top:.7rem; }
   }
+
+  /* emojis 3D: figurinhas nas bordas e entre os trechos */
+  .emo, .emo-inline, .note-emo { pointer-events:none; filter:drop-shadow(0 10px 16px rgba(0,0,0,.35)); }
+  .emo { position:absolute; z-index:3; width:clamp(72px, 15vw, 128px); height:auto; }
+  .emo-inline { display:block; width:clamp(78px, 20vw, 116px); height:auto; margin:.4rem auto 1.2rem; }
+  .note-emo { display:block; width:clamp(72px, 9vw, 104px); height:auto; margin:0 0 .6rem -.4rem; }
+  .emo-tiny { display:inline-block; width:2.2em; height:auto; vertical-align:middle; margin-left:.3rem; }
+  @media (max-width: 900px) { .note-emo { margin:0 auto .5rem; } }
 
   /* Cartório: "Assina, Shrek!" */
   #assina { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:14vh 1rem 8vh; background:var(--blush); text-align:center; }
@@ -176,9 +185,9 @@
   #lockMsg { color:rgba(255,255,255,.85); margin-bottom:1.4rem; font-size:1.1rem; }
   #letter { display:none; max-width:620px; text-align:left; margin-top:1rem; }
   #letter p { font-family:"Cormorant Garamond", serif; font-size:clamp(1.45rem, 4.4vw, 1.9rem); line-height:1.6; margin-bottom:1.2rem; }
-  .letter-media { margin:2.4rem auto; width:min(78vw, 380px); text-align:center; }
+  .letter-media { position:relative; margin:2.4rem auto; width:min(78vw, 380px); text-align:center; }
   .letter-media video { width:100%; aspect-ratio:9/16; object-fit:cover; display:block; border-radius:18px; box-shadow:0 30px 60px -20px rgba(0,0,0,.7); }
-  .letter-media.print img { width:100%; display:block; border-radius:18px; box-shadow:0 30px 60px -20px rgba(0,0,0,.7); }
+  .letter-media.print img:not(.emo) { width:100%; display:block; border-radius:18px; box-shadow:0 30px 60px -20px rgba(0,0,0,.7); }
   .letter-media figcaption { margin-top:.8rem; font-family:"Cormorant Garamond", serif; font-style:italic; font-size:1.25rem; color:#ffb3c0; }
   #letter .sign-name { display:block; margin-top:2.6rem; }
   #letter .sign { text-align:right; color:#ffb3c0; font-style:italic; }
@@ -214,6 +223,7 @@
   <video class="gate-vid" src="futuro/abertura.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
   <div class="gate-in">
     <h1>Você não esperava menos de um <em>desenvolvedor</em>, né?</h1>
+    <img class="emo-inline gate-emo" src="emojis/emoji-por-favor.webp" alt="" aria-hidden="true">
     <button class="pill" id="open">Clica aqui gostosa ❤️</button>
     <p class="hint">aumente o som 🎧</p>
   </div>
@@ -237,7 +247,7 @@
       <p>Há <span id="bigbang" class="num">0,0</span> bilhões de anos, o universo começou.</p>
       <div class="scroll-cue">role devagar</div>
     </div>
-    <div class="cosmo-line"><p>Dois trilhões de galáxias.<small>Cada uma com centenas de bilhões de estrelas. Cada átomo de cálcio dos seus ossos e de ferro do seu sangue foi forjado dentro de uma delas.</small></p></div>
+    <div class="cosmo-line"><p>Dois trilhões de galáxias.<small>Cada uma com centenas de bilhões de estrelas. Cada átomo de cálcio dos seus ossos e de ferro do seu sangue foi forjado dentro de uma delas.</small></p><img class="emo-inline" src="emojis/emoji-uau.webp" alt="" aria-hidden="true" loading="lazy"></div>
     <div class="cosmo-line"><p>Numa delas, num braço discreto da Via Láctea, uma estrela comum: o Sol.</p></div>
     <div class="cosmo-line"><p>E ao redor dele, tudo foi se movendo, sem pressa, até chegar a <em style="color:#ff8fa3">um dia <span class="rot" id="rotWord">específico</span>.</em></p></div>
   </section>
@@ -259,6 +269,7 @@
   <section id="nasceu">
     <div id="nasceuFlash" aria-hidden="true"></div>
     <figure class="polaroid"><img src="fotos/crianca.jpg" alt="Você, pequena"><figcaption>você, alguns anos depois ♥</figcaption></figure>
+    <img class="emo" src="emojis/emoji-emocionado.webp" alt="" aria-hidden="true" loading="lazy" style="right:5%; top:8vh; z-index:2">
     <span class="label">08 · 11 · 2005</span>
     <h2 id="typed" aria-label="Nesse dia, o universo ganhou você, meu amor"><span class="caret"></span></h2>
     <div class="since" id="since" aria-live="off">
@@ -298,7 +309,7 @@
       <div class="rumpel"><video id="rumpelVid" src="futuro/assina.mp4" playsinline preload="auto"></video></div>
       <div class="bubble" id="bubble">Assina, Shrek!</div>
     </div>
-    <p class="sign-cap">E eu assinei kkkk ♥</p>
+    <p class="sign-cap">E eu assinei kkkk ♥<img class="emo-inline" src="emojis/emoji-chorando-de-rir.webp" alt="" aria-hidden="true" loading="lazy"></p>
   </section>
 
   <!-- 5. Carta -->
@@ -312,6 +323,7 @@
       <div class="env-front"></div>
       <div class="env-flap" id="flap"></div>
       <div class="seal" id="seal">♥</div>
+      <img class="emo" src="emojis/emoji-carta.webp" alt="" aria-hidden="true" loading="lazy" style="right:-9%; top:-30%; z-index:6">
     </div>
     <button class="pill" id="openLetter">Abrir a carta ♥</button>
     <div id="letter">
@@ -330,14 +342,16 @@
       <p>Esses dias você tava pegando nossa filha na caixa pra levar pra casa…</p>
       <figure class="letter-media"><video src="futuro/mel.mp4" muted loop playsinline preload="metadata"></video><figcaption>a Mel chegando</figcaption></figure>
       <p>…hoje estamos em outra cidade, com uma motinha zero. Mesmo que antes ainda fosse só um sonho, comprar uma motinha, hoje realizamos. Você vê que as coisas vão se encaixando aos poucos, amor?</p>
-      <figure class="letter-media print"><img src="futuro/moto.jpg" alt="Nossa conversa sobre comprar uma moto"><figcaption>quando ainda era só um sonho</figcaption></figure>
+      <figure class="letter-media print"><img src="futuro/moto.jpg" alt="Nossa conversa sobre comprar uma moto"><figcaption>quando ainda era só um sonho</figcaption><img class="emo" src="emojis/emoji-moto.webp" alt="" aria-hidden="true" loading="lazy" style="right:-12%; bottom:10%"></figure>
       <p>E estamos vivendo bem, sendo felizes. A verdade é que a vida só tem graça quando damos importância ao simples, damos importância pra aquilo que o dinheiro do mundo inteiro não pode comprar. Os momentos únicos que riqueza nenhuma pode comprar.</p>
       <p>Que alegria poder dividir a vida com você, poder ser seu. A lealdade que existe entre nós, o companheirismo, a união… é tudo isso que dinheiro não pode comprar.</p>
       <p id="milagre">Deus faz milagres, e eu sou um milagre. Hoje sou um homem que não precisa de droga, de bebida, que foca no futuro e vê o que realmente importa de verdade: a família, o casamento; que aprecia o verdadeiro sentido da vida. A verdade é que, quando encontramos alguém que nos levanta, que nos incentiva pro bem, o céu é apenas o limite pra todas as coisas que podemos realizar.</p>
       <p>Sou feliz, grato por sua vida, por você existir e fazer parte da minha, meu amor. Eu te amo demais. Que essa data seja cheia de lembranças gostosas. Eu amo sua vida, minha princesa. Você é tudo que um dia sonhei; espero poder viver anos e anos e anos, e mais datas do seu aniversário ao seu lado.</p>
       <p>Prometo que, quando eu vencer no digital (já estou vencendo, acredite), você vence junto comigo. Vai ser esposa, sócia e tudo ❤️ Gratidão pela sua vida. Gratidão a Deus por tudo.</p>
       <p>O texto tá solto mesmo. Só estou escrevendo o que tem no meu coração kkkkkk</p>
+      <img class="emo-inline" src="emojis/emoji-timido.webp" alt="" aria-hidden="true" loading="lazy">
       <p>Que possamos nos aproximar do Pai, pois vemos que, quando nos afastamos, sentimos necessidade novamente de estar perto, sentindo a presença e vivendo nela. Que Jesus possa cuidar daquilo que só você e Ele sabem no seu íntimo. Que em seus sonhos, metas e tudo aquilo que você deseja alcançar exista Jesus. Que você continue sendo essa mulher maravilhosa, especial, que se entrega a tudo aquilo que faz. Você é admirável, meu amor. Que a presença de Deus sempre esteja conosco.</p>
+      <img class="emo-inline" src="emojis/emoji-gratidao.webp" alt="" aria-hidden="true" loading="lazy">
       <p class="sign">Eu te amo.<span class="sign-name">— Seu amor</span></p>
     </div>
   </section>
@@ -345,9 +359,10 @@
   <!-- 6. Final -->
   <section id="final">
     <div>
+      <img class="emo-inline" src="emojis/emoji-coroa.webp" alt="" aria-hidden="true" loading="lazy">
       <span class="label">08 · 11 · 2026</span>
       <h2 class="serif">Feliz aniversário, minha princesa.</h2>
-      <p>feito à mão, linha por linha, para você ♥</p>
+      <p>feito à mão, linha por linha, para você ♥<img class="emo-tiny" src="emojis/emoji-piscadinha.webp" alt="" aria-hidden="true" loading="lazy"></p>
     </div>
   </section>
 </main>
@@ -862,13 +877,13 @@ function startGallery() {
 // focus: retângulos nítidos [x1, y1, x2, y2] em pixels do print (739x1600); soft: levemente desfocados; o resto fica embaçado
 const PRINTS = [
   { src: 'futuro/print1.jpg', focus: [[30, 605, 550, 728], [200, 750, 718, 958], [30, 983, 528, 1222]],
-    note: 'Estava mais do que disposto.' },
+    note: 'Estava mais do que disposto.', emoji: 'desconfiado' },
   { src: 'futuro/print2.jpg', focus: [[30, 700, 545, 965]],
-    note: 'E é verdade: sempre estamos do lado um do outro ❤️' },
+    note: 'E é verdade: sempre estamos do lado um do outro ❤️', emoji: 'abraco' },
   { src: 'futuro/print3.jpg', focus: [[255, 225, 712, 372], [30, 395, 325, 472], [180, 498, 712, 645], [218, 935, 712, 1038]],
-    note: 'E realmente Deus escutou nossas orações.', verse: '“E tudo o que pedirem em oração, se crerem, vocês receberão.”', ref: 'Mateus 21:22' },
+    note: 'E realmente Deus escutou nossas orações.', verse: '“E tudo o que pedirem em oração, se crerem, vocês receberão.”', ref: 'Mateus 21:22', emoji: 'rezando' },
   { src: 'futuro/print4.jpg', focus: [[243, 1055, 718, 1262]], soft: [[243, 310, 708, 1048]],
-    note: 'E de fato, tudo aquilo que falamos se cumpriu. E não vai ser diferente quando digo que nosso futuro será brilhante juntos, cheio de prosperidade e sonhos realizados.' },
+    note: 'E de fato, tudo aquilo que falamos se cumpriu. E não vai ser diferente quando digo que nosso futuro será brilhante juntos, cheio de prosperidade e sonhos realizados.', emoji: 'alianca' },
 ];
 const insetOf = ([x1, y1, x2, y2]) => 'inset(' + (y1 / 16) + '% ' + (100 - x2 / 7.39) + '% ' + (100 - y2 / 16) + '% ' + (x1 / 7.39) + '% round 14px)';
 // Arquivo que ainda não existe aparece como aviso no lugar da imagem.
@@ -893,7 +908,7 @@ const printEls = PRINTS.map((p, i) => {
   let note = null;
   if (p.note) { // fala de confirmação ao lado do print
     note = document.createElement('div'); note.className = 'print-note' + (p.note.length > 80 ? ' long' : '');
-    note.innerHTML = '<p></p>' + (p.verse ? '<blockquote></blockquote><cite></cite>' : '');
+    note.innerHTML = (p.emoji ? '<img class="note-emo" src="emojis/emoji-' + p.emoji + '.webp" alt="" aria-hidden="true">' : '') + '<p></p>' + (p.verse ? '<blockquote></blockquote><cite></cite>' : '');
     note.querySelector('p').textContent = p.note;
     if (p.verse) { note.querySelector('blockquote').textContent = p.verse; note.querySelector('cite').textContent = p.ref; }
     $('#futuro').appendChild(note);
@@ -970,7 +985,7 @@ function allHearts() {
   const r = $('.hud .hearts').getBoundingClientRect();
   burst(r.left, r.top, 30);
   const t = document.createElement('div'); t.className = 'quiz'; t.style.visibility = 'visible'; t.style.bottom = '40%';
-  t.innerHTML = '<h3>Você achou todos os corações.</h3><div class="answer">Eles sempre foram seus. ♥</div>';
+  t.innerHTML = '<img class="emo-inline" src="emojis/emoji-surpreso-feliz.webp" alt="" style="margin-top:0"><h3>Você achou todos os corações.</h3><div class="answer">Eles sempre foram seus. ♥</div>';
   $('#photoUI').appendChild(t);
   gsap.fromTo(t, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: .8, ease: 'power3.out' });
   gsap.to(t, { opacity: 0, delay: 3.5, duration: .8, onComplete: () => t.remove() });
@@ -1020,6 +1035,13 @@ ScrollTrigger.create({ trigger: '#final', start: 'top 60%', once: true, onEnter:
     gsap.to(p, { y: innerHeight + 80, x: `+=${Math.random() * 160 - 80}`, rotation: Math.random() * 360, duration: 7 + Math.random() * 7, delay: Math.random() * 8, repeat: -1, ease: 'none' });
   }
 } });
+// emojis: entram pulando quando chegam na tela e ficam flutuando de leve
+document.querySelectorAll('.emo, .emo-inline:not(.gate-emo)').forEach(el => {
+  gsap.from(el, { scale: 0, opacity: 0, duration: .9, ease: 'back.out(2.2)', scrollTrigger: { trigger: el, start: 'top 92%' } });
+  gsap.to(el, { y: -8, duration: 1.6 + Math.random(), yoyo: true, repeat: -1, ease: 'sine.inOut' });
+});
+gsap.from('.gate-emo', { scale: 0, opacity: 0, duration: 1, delay: .6, ease: 'back.out(2.2)' });
+gsap.to('.gate-emo', { y: -6, duration: 1.4, yoyo: true, repeat: -1, ease: 'sine.inOut' });
 // os gatilhos foram criados fora da ordem da página: ordena e recalcula as posições
 ScrollTrigger.sort(); ScrollTrigger.refresh();
 </script>
