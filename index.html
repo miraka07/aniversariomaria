@@ -428,8 +428,83 @@ song1.play().catch(() => {
   const kick = () => { startSong1(); unlockMedia(); if (!song1.paused) ['touchend', 'click', 'keydown'].forEach(ev => removeEventListener(ev, kick)); };
   ['touchend', 'click', 'keydown'].forEach(ev => addEventListener(ev, kick, { passive: true }));
 });
+/* ---------- efeitos sonoros gerados por código (Web Audio, sem arquivos) ---------- */
+let actx = null;
+function ac() {
+  if (!actx) {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {} // iPhone: toca mesmo no modo silencioso
+  }
+  if (actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function noiseBuf(c, sec) {
+  const b = c.createBuffer(1, Math.ceil(c.sampleRate * sec), c.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  return b;
+}
+function reverb(c, sec, decay) {
+  const b = c.createBuffer(2, Math.ceil(c.sampleRate * sec), c.sampleRate);
+  for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, decay); }
+  const cv = c.createConvolver(); cv.buffer = b; return cv;
+}
+function env(g, t, peak, attack, release) {
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + attack + release);
+}
+// drop de grave cinematográfico: whoosh descendo + impacto + sub-grave que despenca + cauda de reverb
+function dropBass() {
+  if (MUTE_TEST) return;
+  const c = ac(), t = c.currentTime + .03, out = c.createGain(), rv = reverb(c, 3.5, 2.2), wet = c.createGain();
+  out.gain.value = .9; wet.gain.value = .35; out.connect(c.destination); rv.connect(wet).connect(c.destination);
+  // whoosh
+  const wn = c.createBufferSource(); wn.buffer = noiseBuf(c, 1.2);
+  const wf = c.createBiquadFilter(); wf.type = 'bandpass'; wf.Q.value = .8;
+  wf.frequency.setValueAtTime(5000, t); wf.frequency.exponentialRampToValueAtTime(180, t + .9);
+  const wg = c.createGain(); env(wg, t, .35, .05, .9);
+  wn.connect(wf).connect(wg); wg.connect(out); wg.connect(rv); wn.start(t); wn.stop(t + 1.2);
+  // sub-grave com leve saturação
+  const sub = c.createOscillator(); sub.type = 'sine';
+  sub.frequency.setValueAtTime(110, t); sub.frequency.exponentialRampToValueAtTime(32, t + 1.6);
+  const sh = c.createWaveShaper(), curve = new Float32Array(1024);
+  for (let i = 0; i < 1024; i++) { const x = i / 512 - 1; curve[i] = Math.tanh(2.2 * x); }
+  sh.curve = curve;
+  const sg = c.createGain(); env(sg, t, 1, .012, 2.8);
+  sub.connect(sh).connect(sg).connect(out); sub.start(t); sub.stop(t + 3);
+  // impacto
+  const kick = c.createOscillator(); kick.type = 'triangle';
+  kick.frequency.setValueAtTime(220, t); kick.frequency.exponentialRampToValueAtTime(50, t + .25);
+  const kg = c.createGain(); env(kg, t, .55, .005, .4);
+  kick.connect(kg); kg.connect(out); kg.connect(rv); kick.start(t); kick.stop(t + .5);
+  const hn = c.createBufferSource(); hn.buffer = noiseBuf(c, .7);
+  const hf = c.createBiquadFilter(); hf.type = 'lowpass';
+  hf.frequency.setValueAtTime(1400, t); hf.frequency.exponentialRampToValueAtTime(160, t + .6);
+  const hg = c.createGain(); env(hg, t, .5, .004, .6);
+  hn.connect(hf).connect(hg); hg.connect(out); hg.connect(rv); hn.start(t); hn.stop(t + .7);
+}
+// envelope de papel abrindo: estalos do lacre/papel, a aba batendo e a carta deslizando
+function paperOpen() {
+  if (MUTE_TEST) return;
+  const c = ac(), t0 = c.currentTime + .02, out = c.createGain();
+  out.gain.value = .8; out.connect(c.destination);
+  const grain = (t, dur, freq, q, peak) => {
+    const n = c.createBufferSource(); n.buffer = noiseBuf(c, dur + .05);
+    const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
+    const g = c.createGain(); env(g, t, peak, .004, dur);
+    n.connect(f).connect(g).connect(out); n.start(t); n.stop(t + dur + .05);
+  };
+  for (let i = 0; i < 16; i++) grain(t0 + i * .042 + Math.random() * .02, .03 + Math.random() * .05, 2200 + Math.random() * 3200, 1.1, .12 + Math.random() * .22); // papel estalando
+  grain(t0 + .62, .22, 380, .7, .45);   // aba do envelope batendo
+  const sl = c.createBufferSource(); sl.buffer = noiseBuf(c, 1);   // carta deslizando para fora
+  const sf = c.createBiquadFilter(); sf.type = 'bandpass'; sf.frequency.setValueAtTime(900, t0 + .9); sf.frequency.linearRampToValueAtTime(2600, t0 + 1.7); sf.Q.value = .9;
+  const sg = c.createGain(); sg.gain.setValueAtTime(.0001, t0 + .9); sg.gain.linearRampToValueAtTime(.16, t0 + 1.2); sg.gain.linearRampToValueAtTime(.0001, t0 + 1.8);
+  sl.connect(sf).connect(sg).connect(out); sl.start(t0 + .9); sl.stop(t0 + 1.9);
+}
+
 let giftOpened = false;
 $('#open').onclick = () => {
+  dropBass(); // efeito sonoro de entrada
   setTimeout(() => { giftOpened = true; }, 1500); // espera a volta ao topo terminar
   window.scrollTo(0, 0); // sempre começa do topo ao abrir o presente
   startSong1(); // se já estiver tocando, não reinicia
@@ -503,7 +578,7 @@ function drawSky(t) {
 // textos do universo surgem e somem com desfoque
 // cada frase do universo fica parada no centro da tela por um tempo, para dar tempo de ler
 gsap.utils.toArray('.cosmo-line').forEach((line, i) => {
-  const pin = ScrollTrigger.create({ trigger: line, start: 'center center', end: i ? '+=70%' : '+=40%', pin: true });
+  const pin = ScrollTrigger.create({ trigger: line, start: 'center center', end: i ? '+=70%' : '+=40%', pin: true, refreshPriority: 100 - i });
   // só esmaece depois que a pausa termina
   gsap.to(line.querySelector('p'), { opacity: 0, y: -40, ease: 'none', immediateRender: false,
     scrollTrigger: { start: () => pin.end, end: () => pin.end + innerHeight * .4, scrub: true, refreshPriority: -1 } }); // calcula depois da pausa
@@ -513,9 +588,9 @@ gsap.to(cosmos, { zoom: 1, drift: 1.2, ease: 'none', scrollTrigger: { trigger: '
 /* ---------- 2. O céu 3D: o progresso da rolagem vai para ceu3d.js ---------- */
 window.CEU = { p: 0 };
 const ceuSeg = (p, a, b) => clamp01((p - a) / (b - a));
-ScrollTrigger.create({ trigger: '#ceu', start: 'top top', end: '+=600%', pin: true, scrub: true, onUpdate: s => {
+ScrollTrigger.create({ trigger: '#ceu', start: 'top top', end: '+=600%', pin: true, scrub: true, refreshPriority: 90, onUpdate: s => {
   const p = window.CEU.p = s.progress;
-  gsap.set('#dawn', { opacity: ceuSeg(p, .93, 1) }); // depois do mergulho na Terra, a página fica branca
+  gsap.set('#dawn', { opacity: ceuSeg(p, .955, 1) }); // depois do mergulho na Terra, a página fica branca
   const idx = p < .36 ? 0 : p < .56 ? 1 : p < .72 ? 2 : p < .86 ? 3 : 4;
   document.querySelectorAll('.cap').forEach((c, i) => {
     const on = i === idx && p > .02 && p < .95;
@@ -596,7 +671,7 @@ function exitFx(sel) {
 }
 exitFx('#nasceu .label, #typed, #carta > .label, #carta > h2, #assina > .label');
 // a frase "Nesse dia, o universo ganhou você" também fica parada um tempo
-ScrollTrigger.create({ trigger: '#nasceu', start: 'top top', end: '+=60%', pin: true });
+ScrollTrigger.create({ trigger: '#nasceu', start: 'top top', end: '+=60%', pin: true, refreshPriority: 80 });
 
 /* ---------- animações de texto: palavras e letras subindo ---------- */
 function split(el, byChar) {
@@ -809,7 +884,7 @@ const printEls = PRINTS.map((p, i) => {
 });
 const FOCUS_BLUR = 'blur(3px) brightness(.72) saturate(.7)';
 document.querySelectorAll('#wedding img, .fut-bg').forEach(im => { im.onerror = () => placeholder(im); if (im.complete && !im.naturalWidth) placeholder(im); });
-const fut = gsap.timeline({ scrollTrigger: { trigger: '#futuro', start: 'top top', end: '+=' + (PRINTS.length * 90 + 220) + '%', pin: true, scrub: 1 } });
+const fut = gsap.timeline({ scrollTrigger: { trigger: '#futuro', start: 'top top', end: '+=' + (PRINTS.length * 90 + 220) + '%', pin: true, scrub: 1, refreshPriority: 70 } });
 // o título aparece sozinho, sai, e só então o celular entra (no celular os dois não se sobrepõem)
 fut.from('.fut-title > *', { opacity: 0, y: 60, filter: 'blur(14px)', stagger: .15, duration: .7 })
    .to('.fut-title', { opacity: 0, y: -60, filter: 'blur(12px)', duration: .6 }, '+=.6')
@@ -891,6 +966,7 @@ song3.addEventListener('play', () => { if (worship) song3.pause(); });
 // quando "Na terra como no céu" termina, entra o Djavan; o Delacruz continua travado
 song2.addEventListener('ended', () => { djavan = true; song2._wanted = false; song4._wanted = true; song4.volume = 0; song4.play().then(() => fadeVol(song4, 1, 2.5)).catch(() => {}); });
 $('#openLetter').onclick = () => {
+  paperOpen(); // som de envelope de papel abrindo
   letterOpen = true;
   gsap.to('#stageDim', { opacity: .72, duration: 1.4 });
   $('#openLetter').style.display = 'none'; $('#lockMsg').style.display = 'none';
@@ -930,6 +1006,6 @@ ScrollTrigger.create({ trigger: '#final', start: 'top 60%', once: true, onEnter:
 ScrollTrigger.sort(); ScrollTrigger.refresh();
 </script>
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
-<script type="module" src="ceu3d.js?v=11"></script>
+<script type="module" src="ceu3d.js?v=18"></script>
 </body>
 </html>
