@@ -129,7 +129,7 @@ function latLon(lat, lng, r) {
   const phi = (90 - lat) * DEG, th = (lng + 180) * DEG;
   return new THREE.Vector3(-r * Math.sin(phi) * Math.cos(th), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(th));
 }
-const marker = new THREE.Mesh(new THREE.SphereGeometry(.006, 16, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(1, .1, .25).multiplyScalar(2) }));
+const marker = new THREE.Mesh(new THREE.SphereGeometry(.025, 16, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(1, .1, .25).multiplyScalar(4) }));
 marker.position.copy(latLon(-20.67, -40.50, 1.005));
 earth.add(marker);
 const MARKER_ANG = Math.atan2(-marker.position.z, marker.position.x);
@@ -182,7 +182,6 @@ function frame() {
   labelEl.textContent = p < .36 ? 'voltando no tempo' : 'terça-feira';
   P.forEach(pl => { const a = lon(pl, day); pl.mesh.position.set(Math.cos(a) * pl.r, 0, -Math.sin(a) * pl.r); pl.mesh.rotation.y = t * .15; });
   clouds.rotation.y = t * .012;
-  clouds.material.opacity = .8 - .55 * seg(p, .86, .92); // nuvens afinam no mergulho para o litoral aparecer
   halo.material.opacity = .4 + Math.sin(t * 1.3) * .06;
   const E = earth.position, M = mars.position;
   // antes do mergulho, a Terra gira até Guarapari ficar de frente para o Sol (lado iluminado)
@@ -197,7 +196,7 @@ function frame() {
 
   // Marte em oposição
   const aMoon = seg(p, .54, .58) * (1 - seg(p, .7, .74));
-  P.forEach(pl => pl.ring.material.opacity = .12 * (1 - aMoon) * (1 - seg(p, .86, .9))); // órbitas somem no mergulho
+  P.forEach(pl => pl.ring.material.opacity = .12 * (1 - aMoon));
   const aMars = seg(p, .36, .42) * (1 - seg(p, .54, .58));
   beam.material.opacity = aMars * .9;
   beam.geometry.setFromPoints([new THREE.Vector3(), M.clone()]); beam.computeLineDistances();
@@ -213,10 +212,10 @@ function frame() {
   tp.needsUpdate = true;
 
   // mergulho na Terra: Guarapari pulsa
-  const aDive = seg(p, .86, .94);
-  pulse.material.opacity = aDive * (.45 + Math.sin(t * 4) * .2);
-  const ps = .03 + aDive * .015 + Math.sin(t * 4) * .008; pulse.scale.set(ps, ps, 1); // pequeno: com o zoom perto, marca só a cidade
-  flash.style.opacity = seg(p, .955, 1);
+  const aDive = seg(p, .86, .96);
+  pulse.material.opacity = aDive * (.7 + Math.sin(t * 4) * .3);
+  const ps = .25 + aDive * .25 + Math.sin(t * 4) * .05; pulse.scale.set(ps, ps, 1);
+  flash.style.opacity = seg(p, .93, 1);
 
   // alvos da câmera por fase
   if (p < .36) {
@@ -234,10 +233,9 @@ function frame() {
   } else { // descendo até Guarapari
     const mw = marker.getWorldPosition(new THREE.Vector3());
     const dir = mw.sub(E).normalize();
-    tPos.copy(E).addScaledVector(dir, 6 - ease(aDive) * 4.55); tLook.copy(E); // desce até ~0,45 raio da superfície: Sudeste/ES nítido
+    tPos.copy(E).addScaledVector(dir, 6 - ease(aDive) * 4.6); tLook.copy(E);
   }
   const damp = window.CEU?.snap ? 1 : p > .86 ? .12 : .045;
-  atmo.visible = camera.position.distanceTo(E) > 1.4; // perto demais, o brilho da atmosfera cobre a tela
   camPos.lerp(tPos, damp); camLook.lerp(tLook, damp);
   camera.position.copy(camPos);
   // vista do hemisfério sul na cena da Lua: câmera de ponta-cabeça deixa o lado iluminado à esquerda
@@ -245,9 +243,8 @@ function frame() {
   camera.lookAt(camLook);
   // nome da cidade preso ao marcador na tela
   marker.getWorldPosition(projV).project(camera);
-  placeEl.style.opacity = seg(p, .88, .92) * (1 - seg(p, .965, .99));
+  placeEl.style.opacity = seg(p, .88, .93) * (1 - seg(p, .955, .98));
   placeEl.style.transform = 'translate(' + ((projV.x + 1) / 2 * canvas.clientWidth) + 'px,' + ((1 - projV.y) / 2 * canvas.clientHeight) + 'px)';
   composer.render();
 }
-Object.assign(window.CEU || (window.CEU = {}), { cam: camera, earth, marker, pulse }); // para depuração
 frame();

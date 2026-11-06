@@ -625,7 +625,7 @@ window.CEU = { p: 0 };
 const ceuSeg = (p, a, b) => clamp01((p - a) / (b - a));
 ScrollTrigger.create({ trigger: '#ceu', start: 'top top', end: '+=600%', pin: true, scrub: true, refreshPriority: 90, onUpdate: s => {
   const p = window.CEU.p = s.progress;
-  gsap.set('#dawn', { opacity: ceuSeg(p, .955, 1) }); // depois do mergulho na Terra, a página fica branca
+  gsap.set('#dawn', { opacity: ceuSeg(p, .93, 1) }); // depois do mergulho na Terra, a página fica branca
   const idx = p < .36 ? 0 : p < .56 ? 1 : p < .72 ? 2 : p < .86 ? 3 : 4;
   document.querySelectorAll('.cap').forEach((c, i) => {
     const on = i === idx && p > .02 && p < .95;
@@ -1045,6 +1045,6 @@ ScrollTrigger.create({ trigger: '#final', start: 'top 60%', once: true, onEnter:
 ScrollTrigger.sort(); ScrollTrigger.refresh();
 </script>
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
-<script type="module" src="ceu3d.js?v=18"></script>
+<script type="module" src="ceu3d.js?v=19"></script>
 </body>
 </html>
