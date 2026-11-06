@@ -118,6 +118,12 @@
   #typed em { color:#ff8fa3; }
   .caret { display:inline-block; width:2px; height:.9em; margin-left:4px; background:#ff8fa3; vertical-align:-.08em; animation:blink 1s steps(1) infinite; }
   @keyframes blink { 50% { opacity:0; } }
+  .since { position:relative; z-index:1; margin-top:1.6rem; opacity:0; }
+  .since-label { display:block; font-family:"Cormorant Garamond", serif; font-style:italic; font-size:clamp(1.2rem, 3.6vw, 1.6rem); color:#ffd6de; margin-bottom:.8rem; text-shadow:0 2px 16px rgba(0,0,0,.6); }
+  .since-grid { display:flex; justify-content:center; gap:clamp(.5rem, 2.5vw, 1.4rem); }
+  .since-grid div { min-width:clamp(3.4rem, 15vw, 5.4rem); padding:.6rem .3rem; border-radius:14px; background:rgba(20,6,10,.55); border:1px solid rgba(255,143,163,.4); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+  .since-grid b { display:block; font-family:Roboto, sans-serif; font-weight:700; font-size:clamp(1.4rem, 5.5vw, 2.4rem); line-height:1.1; color:#fff; font-variant-numeric:tabular-nums; }
+  .since-grid small { display:block; margin-top:.2rem; font-size:clamp(.62rem, 2.4vw, .8rem); letter-spacing:.12em; text-transform:uppercase; color:#ffb3c0; font-weight:700; }
   .w { display:inline-block; overflow:hidden; vertical-align:top; padding:.18em 0 .12em; margin:-.18em 0 -.12em; }
   .w > span { display:inline-block; }
   .replay { margin-top:1.4rem; visibility:hidden; }
@@ -252,6 +258,16 @@
     <figure class="polaroid"><img src="fotos/crianca.jpg" alt="Você, pequena"><figcaption>você, alguns anos depois ♥</figcaption></figure>
     <span class="label">08 · 11 · 2005</span>
     <h2 id="typed" aria-label="Nesse dia, o universo ganhou você, meu amor"><span class="caret"></span></h2>
+    <div class="since" id="since" aria-live="off">
+      <span class="since-label">e desde então, o mundo tem você há</span>
+      <div class="since-grid">
+        <div><b id="sY">0</b><small>anos</small></div>
+        <div><b id="sD">0</b><small>dias</small></div>
+        <div><b id="sH">0</b><small>horas</small></div>
+        <div><b id="sM">0</b><small>minutos</small></div>
+        <div><b id="sS">0</b><small>segundos</small></div>
+      </div>
+    </div>
   </section>
 
   <!-- 4. Nós: galeria imersiva -->
@@ -371,13 +387,16 @@ function unlockMedia() {
   if (unlocked) return; unlocked = true;
   [song2, song3, song4, $('#rumpelVid')].forEach(m => {
     if (!m.paused) return;
-    m.muted = true;
-    m.play().then(() => { if (!m._wanted) { m.pause(); m.currentTime = 0; } m.muted = MUTE_TEST; }).catch(() => { m.muted = MUTE_TEST; });
+    m._priming = true; m.muted = true;
+    const done = () => { if (!m._wanted) { m.pause(); m.currentTime = 0; } m.muted = MUTE_TEST; m._priming = false; };
+    m.play().then(done, done);
   });
 }
+// trava geral: nenhuma música ou vídeo toca se não for a vez dele (evita tudo tocando junto)
+[song2, song3, song4, $('#rumpelVid')].forEach(m => m.addEventListener('play', () => { if (!m._wanted && !m._priming) m.pause(); }));
 function fadeVol(a, to, sec) {
   if (a === song3 && to > 0 && typeof worship !== 'undefined' && worship) return; // durante a música da carta o Delacruz não volta
-  if (!CAN_VOL) { clearInterval(a._fade); if (to <= .2) a.pause(); else if (a.paused) a.play().catch(() => {}); return; }
+  if (!CAN_VOL) { clearInterval(a._fade); if (to <= .2) a.pause(); else if (a.paused && a._wanted) a.play().catch(() => {}); return; }
   clearInterval(a._fade);
   const from = a.volume, t0 = performance.now();
   a._fade = setInterval(() => {
@@ -527,8 +546,29 @@ ScrollTrigger.create({ trigger: '#typed', start: 'top 92%', once: true, onEnter:
   const tl = gsap.timeline({ delay: .15 });
   typeText(tl);
   tl.add(() => { const r = typed.querySelector('em').getBoundingClientRect(); burst(r.left + r.width / 2, r.top, 18); })
+    .fromTo('#since', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 1, ease: 'power3.out' }, '+=.3')
     .to(caret, { opacity: 0, duration: .4, delay: 1.2 });
 } });
+
+/* ---------- contagem ao vivo desde o nascimento (08/11/2005, Guarapari, horário de verão UTC-2) ---------- */
+const BIRTH = new Date('2005-11-08T00:00:00-02:00'); // hora exata desconhecida: conta desde o início do dia
+function since(now) {
+  // anos completos desde o último aniversário, depois dias/horas/minutos/segundos desde ele
+  let y = now.getFullYear() - 2005;
+  const lastBday = d => new Date(BIRTH.getTime()).setFullYear(2005 + d);
+  if (now < lastBday(y)) y--;
+  let rest = Math.floor((now - lastBday(y)) / 1000);
+  const d = Math.floor(rest / 86400); rest -= d * 86400;
+  const h = Math.floor(rest / 3600); rest -= h * 3600;
+  const m = Math.floor(rest / 60);
+  return { y, d, h, m, s: rest - m * 60 };
+}
+console.assert(since(new Date('2026-11-08T00:00:01-02:00')).y === 21 && since(new Date('2026-11-07T23:00:00-02:00')).y === 20, 'contagem de anos');
+function tickSince() {
+  const v = since(new Date());
+  $('#sY').textContent = v.y; $('#sD').textContent = v.d; $('#sH').textContent = v.h; $('#sM').textContent = v.m; $('#sS').textContent = v.s;
+}
+tickSince(); setInterval(tickSince, 1000);
 
 /* ---------- "um dia ___": a palavra vai trocando ---------- */
 const DAY_WORDS = ['específico', 'único', 'marcado', 'especial', 'escolhido', 'abençoado', 'inesquecível', 'perfeito'];
@@ -786,8 +826,8 @@ fut.to('#phone', { scale: .9, rotation: 3, duration: .6 }, '+=.4')
 /* ---------- 4c. Cartório: o personagem cobra a assinatura ---------- */
 const rv = $('#rumpelVid');
 // a música abaixa só enquanto o vídeo está tocando (fala por cima) e volta quando ele para
-rv.addEventListener('play', () => !worship && fadeVol(song3, .15, .6));
-rv.addEventListener('pause', () => !worship && fadeVol(song3, 1, 1.5));
+rv.addEventListener('play', () => !rv._priming && !worship && fadeVol(song3, .15, .6));
+rv.addEventListener('pause', () => !rv._priming && !worship && fadeVol(song3, 1, 1.5));
 function assina() {
   rv.currentTime = 0;
   gsap.timeline()
@@ -825,7 +865,7 @@ function allHearts() {
 }
 let worship = false;
 function toWorship() {
-  if (worship) return; worship = true; song2._wanted = true;
+  if (worship) return; worship = true; song2._wanted = true; song3._wanted = false;
   fadeVol(song3, 0, 2);
   setTimeout(() => worship && song3.pause(), 2100);
   song2.volume = 0;
@@ -833,15 +873,16 @@ function toWorship() {
 }
 let djavan = false;
 function toDelacruz() {
-  if (!worship || djavan) return; worship = false; // depois que o Djavan entra, não volta mais para o Delacruz
+  if (!worship || djavan) return; worship = false; song2._wanted = false; // depois que o Djavan entra, não volta mais para o Delacruz
   fadeVol(song2, 0, 2);
   setTimeout(() => !worship && song2.pause(), 2100);
+  song3._wanted = true;
   song3.play().then(() => fadeVol(song3, 1, 2.5)).catch(() => {});
 }
 // trava: enquanto a música da carta estiver ativa, qualquer tentativa de tocar o Delacruz é cancelada
 song3.addEventListener('play', () => { if (worship) song3.pause(); });
 // quando "Na terra como no céu" termina, entra o Djavan; o Delacruz continua travado
-song2.addEventListener('ended', () => { djavan = true; song4._wanted = true; song4.volume = 0; song4.play().then(() => fadeVol(song4, 1, 2.5)).catch(() => {}); });
+song2.addEventListener('ended', () => { djavan = true; song2._wanted = false; song4._wanted = true; song4.volume = 0; song4.play().then(() => fadeVol(song4, 1, 2.5)).catch(() => {}); });
 $('#openLetter').onclick = () => {
   letterOpen = true;
   gsap.to('#stageDim', { opacity: .72, duration: 1.4 });
