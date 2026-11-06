@@ -8,7 +8,8 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 const TEX = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r170/examples/textures/planets/';
 const canvas = document.getElementById('orrery3d');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+const LOW = matchMedia('(pointer: coarse)').matches || innerWidth < 800; // celular: menos pixels na cena 3D
+renderer.setPixelRatio(Math.min(LOW ? 1.25 : 1.75, devicePixelRatio));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.1;
 
