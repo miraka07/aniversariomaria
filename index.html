@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Para você ♥</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,500&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --red:#c8102e; --wine:#7a0c1f; --rose:#f6d5da; --blush:#fff5f6; --ink:#2b1a1d; --soft:#6f5359; --night:#040822; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html { background:var(--night); font-size:118%; }
+  html.lenis, html.lenis body { height:auto; }
+  .lenis.lenis-smooth { scroll-behavior:auto !important; }
+  body { color:var(--ink); font-family:Roboto, system-ui, sans-serif; font-weight:500; line-height:1.7; overflow-x:hidden; -webkit-font-smoothing:antialiased; }
+  body.locked { overflow:hidden; height:100vh; }
+  .serif { font-family:"Cormorant Garamond", Georgia, serif; font-weight:400; }
+  em { color:var(--red); font-style:italic; }
+  button { font-family:inherit; }
+
+  /* Camadas fixas: universo (canvas) e amanhecer (branco) */
+  #sky { position:fixed; inset:0; width:100%; height:100%; z-index:0; display:block; }
+  #dawn { position:fixed; inset:0; z-index:1; background:#fff; opacity:0; pointer-events:none; }
+  main { position:relative; z-index:2; }
+
+  /* Portão */
+  #gate { position:fixed; inset:0; z-index:100; display:grid; place-items:center; text-align:center; padding:2rem; background:radial-gradient(ellipse at center, #141a50, var(--night) 70%); color:#fff; }
+  #gate .kicker { letter-spacing:.35em; text-transform:uppercase; font-size:.82rem; font-weight:700; color:#f3b6c0; margin-bottom:1.6rem; }
+  #gate h1 { font-family:"Cormorant Garamond", serif; font-weight:400; font-size:clamp(2.6rem, 8.5vw, 5.2rem); line-height:1.08; max-width:14ch; margin:0 auto 2.8rem; }
+  #gate h1 em { color:#ff8fa3; }
+  /* vídeo de fundo da entrada: sem cor, misturado ao azul e esmaecendo nas bordas */
+  .gate-vid { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; opacity:.62; mix-blend-mode:screen;
+    filter:grayscale(1) contrast(1.15) brightness(.85);
+    -webkit-mask:radial-gradient(ellipse 75% 70% at center, #000 35%, transparent 85%); mask:radial-gradient(ellipse 75% 70% at center, #000 35%, transparent 85%); }
+  #gate::after { content:""; position:absolute; inset:0; z-index:1; pointer-events:none; background:radial-gradient(ellipse at center, rgba(20,26,80,.22), rgba(4,8,34,.82) 78%); }
+  .gate-in { position:relative; z-index:2; }
+  .pill { border:1px solid currentColor; background:transparent; color:#fff; padding:1rem 2.4rem; border-radius:999px; font-weight:700; font-size:.92rem; letter-spacing:.1em; cursor:pointer; transition:background .3s, color .3s; }
+  .pill:hover { background:#fff; color:var(--night); }
+  .pill.red { color:var(--red); }
+  .pill.red:hover { background:var(--red); color:#fff; }
+  .hint { margin-top:1.4rem; font-size:.75rem; opacity:.6; letter-spacing:.15em; }
+
+  /* Universo */
+  #cosmos { color:#fff; text-align:center; }
+  .cosmo-line { min-height:85vh; display:grid; place-items:center; padding:0 1.5rem; }
+  .cosmo-line p { font-family:"Cormorant Garamond", serif; font-size:clamp(2.4rem, 7.6vw, 5.4rem); line-height:1.08; max-width:16ch; text-shadow:0 2px 30px rgba(0,0,0,.6); }
+  .cosmo-line small { display:block; margin-top:1.2rem; font-family:Roboto, sans-serif; font-size:clamp(1.1rem, 2.7vw, 1.5rem); font-weight:500; letter-spacing:.01em; opacity:.9; max-width:34ch; margin-inline:auto; line-height:1.6; }
+  .num { font-variant-numeric:tabular-nums; }
+  .rot { display:inline-block; }
+  .scroll-cue { position:absolute; left:50%; bottom:2rem; transform:translateX(-50%); color:#fff; font-size:.8rem; letter-spacing:.3em; text-transform:uppercase; font-weight:700; opacity:.7; }
+  .scroll-cue::after { content:""; display:block; width:1px; height:40px; background:#fff; margin:.8rem auto 0; animation:cue 2s infinite; transform-origin:top; }
+  @keyframes cue { 0%{transform:scaleY(0)} 50%{transform:scaleY(1)} 100%{transform:scaleY(1); opacity:0} }
+
+  /* Cena 3D: céu de 08.11.2005 */
+  #ceu { height:100vh; position:relative; overflow:hidden; background:#02040f; }
+  #orrery3d { position:absolute; inset:0; width:100%; height:100%; display:block; }
+  #placeLabel { position:absolute; left:0; top:0; z-index:2; opacity:0; pointer-events:none; will-change:transform; }
+  #placeLabel span { position:absolute; left:22px; top:-48px; white-space:nowrap; color:#fff; font:700 clamp(1.1rem, 3vw, 1.6rem) Roboto, sans-serif; letter-spacing:.08em; text-shadow:0 2px 14px rgba(0,0,0,.9); border-left:2px solid #ff8fa3; padding-left:.6rem; }
+  #ceuFlash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:3; }
+  .ceu-date { position:absolute; top:7vh; left:0; right:0; text-align:center; pointer-events:none; z-index:2; color:#fff; }
+  .ceu-date span { display:block; font-size:.82rem; letter-spacing:.35em; text-transform:uppercase; font-weight:700; color:#ff8fa3; }
+  .ceu-date strong { font-family:"Cormorant Garamond", serif; font-weight:400; font-size:clamp(2.6rem, 8vw, 5.5rem); letter-spacing:.04em; line-height:1.1; font-variant-numeric:tabular-nums; text-shadow:0 2px 30px rgba(0,0,0,.6); }
+  .cap { position:absolute; z-index:2; left:50%; bottom:5vh; transform:translateX(-50%); width:min(94vw, 700px); text-align:center; opacity:0; pointer-events:none; color:#fff; background:rgba(8,10,32,.88); border:1px solid rgba(255,143,163,.45); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); padding:1.4rem 1.8rem; border-radius:20px; box-shadow:0 24px 70px -10px rgba(0,0,0,.7); }
+  .cap b { display:block; color:#ff8fa3; font-size:.95rem; letter-spacing:.3em; text-transform:uppercase; margin-bottom:.35rem; }
+  .cap p { font-size:clamp(1.12rem, 2.8vw, 1.45rem); line-height:1.5; }
+  .label { display:block; letter-spacing:.32em; text-transform:uppercase; font-size:.95rem; font-weight:700; color:var(--red); margin-bottom:1rem; }
+  h2 { font-family:"Cormorant Garamond", serif; font-weight:400; font-size:clamp(2.6rem, 8.4vw, 5.2rem); line-height:1.06; margin-bottom:1rem; }
+
+  /* Futuro: prints + casamento */
+  #futuro { height:100vh; height:100svh; position:relative; overflow:hidden; background:linear-gradient(#fff, var(--blush)); }
+  .fut-title { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 1.5rem; z-index:3; }
+  .fut-title h2 { max-width:14ch; position:relative; color:#fff; text-shadow:0 4px 40px rgba(0,0,0,.6); }
+  .fut-title .label { position:relative; color:#ffb3c0; }
+  .fut-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 25%; }
+  .fut-title::before { content:""; position:absolute; inset:0; z-index:1; background:linear-gradient(rgba(20,6,10,.25), rgba(20,6,10,.7)); }
+  .fut-title > :not(img) { z-index:2; }
+  .phone { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); height:min(84vh, 800px); max-width:88vw; aspect-ratio:9/19; border-radius:42px; border:10px solid #1b1214; background:#fff; overflow:hidden; box-shadow:0 40px 80px -30px rgba(43,26,29,.5); z-index:2; }
+  .phone .print { position:absolute; left:0; top:0; width:100%; aspect-ratio:739/1600; background:#fff; }
+  .phone .print img { position:absolute; inset:0; width:100%; height:100%; display:block; }
+  #wedding { position:absolute; inset:0; z-index:4; clip-path:circle(0% at 50% 58%); }
+  #wedding img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  #wedding .w2 { opacity:0; }
+
+  .print-note { position:absolute; z-index:4; top:50%; translate:0 -50%; left:calc(50% + min(84vh, 800px) * 9 / 38 + 4vw); width:min(30vw, 420px); text-align:left; border-left:3px solid var(--red); padding:.4rem 0 .4rem 1.4rem; }
+  .print-note p { font-family:"Cormorant Garamond", serif; font-style:italic; font-size:clamp(1.9rem, 3vw, 2.8rem); line-height:1.15; color:var(--ink); }
+  .print-note blockquote { margin-top:1.1rem; font-family:"Cormorant Garamond", serif; font-size:clamp(1.25rem, 1.8vw, 1.6rem); line-height:1.35; color:var(--ink); }
+  .print-note cite { display:block; margin-top:.5rem; font-style:normal; font-weight:700; letter-spacing:.2em; text-transform:uppercase; font-size:.85rem; color:var(--red); }
+  .print-note.long p { font-size:clamp(1.5rem, 2.2vw, 2.1rem); line-height:1.25; }
+  @media (max-width: 900px) {
+    .print-note.long p { font-size:clamp(1.2rem, 4.8vw, 1.45rem); }
+    .print-note { top:auto; bottom:4vh; left:50%; translate:-50% 0; width:90vw; text-align:center; border-left:0; border-top:3px solid var(--red); padding:1.1rem 1.3rem; border-radius:16px; background:rgba(255,255,255,.96); box-shadow:0 20px 50px -15px rgba(43,26,29,.45); }
+    .print-note p { font-size:clamp(1.6rem, 6.5vw, 2.1rem); }
+    .print-note blockquote { font-size:1.15rem; margin-top:.7rem; }
+  }
+
+  /* Cartório: "Assina, Shrek!" */
+  #assina { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:14vh 1rem 8vh; background:var(--blush); text-align:center; }
+  .sign-wrap { position:relative; height:min(80vh, 880px); aspect-ratio:3/4; max-width:94vw; }
+  .sign-photo { width:100%; height:100%; object-fit:cover; border-radius:18px; box-shadow:0 30px 60px -25px rgba(43,26,29,.45); }
+  .rumpel { position:absolute; left:62%; top:-7%; width:40%; aspect-ratio:1; border-radius:50%; overflow:hidden;
+    -webkit-mask:radial-gradient(circle, #000 56%, transparent 72%); mask:radial-gradient(circle, #000 56%, transparent 72%); }
+  .rumpel video { width:100%; height:100%; object-fit:cover; display:block; }
+  /* anel desfocado nas bordas: só o rosto fica nítido */
+  .rumpel::after { content:""; position:absolute; inset:0; backdrop-filter:blur(9px); -webkit-backdrop-filter:blur(9px);
+    -webkit-mask:radial-gradient(circle, transparent 40%, #000 62%); mask:radial-gradient(circle, transparent 40%, #000 62%); }
+  .bubble { position:absolute; left:3%; top:6%; max-width:40%; padding:.8rem 1.1rem; background:#fff; color:var(--ink); border:3px solid var(--ink); border-radius:22px;
+    font:700 clamp(1.1rem, 3.4vw, 1.7rem)/1.15 Roboto, sans-serif; box-shadow:4px 5px 0 var(--ink); transform-origin:85% 100%; }
+  .bubble::after { content:""; position:absolute; right:-16px; bottom:10px; border:12px solid transparent; border-left:18px solid var(--ink); }
+  .bubble::before { content:""; position:absolute; right:-9px; bottom:13px; border:9px solid transparent; border-left:13px solid #fff; z-index:1; }
+  #assina > .label { margin-bottom:4rem; }
+  #nasceu { min-height:100vh; min-height:100svh; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; text-align:center; padding:10vh 1.5rem 14vh; color:#fff; background:#1a0d10; }
+  #nasceu .label { color:#ffb3c0; position:relative; z-index:1; }
+  .polaroid { position:absolute; inset:0; margin:0; z-index:0; }
+  .polaroid img { width:100%; height:100%; object-fit:cover; object-position:center 30%; display:block; }
+  .polaroid::after { content:""; position:absolute; inset:0; background:linear-gradient(rgba(20,6,10,.1) 30%, rgba(20,6,10,.82)); }
+  .polaroid figcaption { display:none; }
+  #typed { position:relative; z-index:1; min-height:3.2em; max-width:13ch; font-size:clamp(3rem, 10vw, 6.6rem); text-shadow:0 4px 40px rgba(0,0,0,.6); }
+  #typed em { color:#ff8fa3; }
+  .caret { display:inline-block; width:2px; height:.9em; margin-left:4px; background:#ff8fa3; vertical-align:-.08em; animation:blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity:0; } }
+  .w { display:inline-block; overflow:hidden; vertical-align:top; padding:.18em 0 .12em; margin:-.18em 0 -.12em; }
+  .w > span { display:inline-block; }
+  .replay { margin-top:1.4rem; visibility:hidden; }
+  .sign-cap { font-family:"Cormorant Garamond", serif; font-size:clamp(2rem, 6vw, 3.4rem); margin-top:1rem; opacity:0; }
+
+  #wedding .veil { position:absolute; inset:0; background:linear-gradient(transparent 45%, rgba(26,6,10,.7)); }
+  #wedding .txt { position:absolute; left:0; right:0; bottom:10vh; text-align:center; color:#fff; padding:0 1.5rem; }
+  #wedding h2 { font-size:clamp(3rem, 10vw, 6.4rem); text-shadow:0 2px 30px rgba(0,0,0,.5); }
+
+  /* Galeria: palco fixo que continua passando atrás da carta e do final */
+  #stage { position:fixed; inset:0; z-index:1; background:#1a0d10; overflow:hidden; visibility:hidden; opacity:0; }
+  #stageDim { position:absolute; inset:0; z-index:3; background:#12060a; opacity:0; pointer-events:none; }
+  #photoUI { position:fixed; inset:0; z-index:3; pointer-events:none; visibility:hidden; opacity:0; }
+  #photoUI .quiz, #photoUI .hidden-heart { pointer-events:auto; }
+  #nos { height:100vh; height:100svh; position:relative; cursor:pointer; }
+  .slot { position:absolute; inset:0; }
+  .slot .bg { position:absolute; inset:-8%; width:116%; height:116%; object-fit:cover; filter:blur(38px) saturate(1.2) brightness(.75); }
+  .slot .fg { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+  @media (max-aspect-ratio: 4/5) { .slot .fg { object-fit:cover; } }
+  .vignette { position:absolute; inset:0; z-index:2; pointer-events:none; background:radial-gradient(ellipse at center, transparent 55%, rgba(26,6,10,.55)); }
+  .hud { position:absolute; left:0; right:0; bottom:0; padding:1.4rem 1.6rem calc(1.4rem + env(safe-area-inset-bottom)); display:flex; justify-content:space-between; align-items:flex-end; color:#fff; pointer-events:none; z-index:5; text-shadow:0 1px 10px rgba(0,0,0,.5); }
+  .hud .count { font-size:.95rem; letter-spacing:.25em; font-weight:700; }
+  .hud .hearts { font-size:1rem; font-weight:700; letter-spacing:.1em; }
+  .hud .hearts i { font-style:normal; color:#ff6b81; }
+  .tap-hint { position:absolute; top:1.4rem; left:0; right:0; text-align:center; color:#fff; font-size:.82rem; letter-spacing:.3em; text-transform:uppercase; font-weight:700; z-index:5; pointer-events:none; text-shadow:0 1px 10px rgba(0,0,0,.6); }
+  .nos-title { position:absolute; inset:0; display:grid; place-items:center; z-index:6; color:#fff; text-align:center; pointer-events:none; }
+  .nos-title h2 { text-shadow:0 2px 30px rgba(0,0,0,.6); }
+  .hidden-heart { position:absolute; z-index:7; width:58px; height:58px; border:0; background:none; cursor:pointer; font-size:40px; line-height:58px; color:#ff4d6d; filter:drop-shadow(0 0 12px rgba(255,77,109,.9)); }
+  .fly { position:fixed; z-index:200; pointer-events:none; color:#ff4d6d; font-size:40px; }
+
+  /* Quiz */
+  .quiz { position:absolute; z-index:8; left:50%; bottom:5.5rem; transform:translateX(-50%); width:min(92vw, 420px); padding:1.6rem 1.4rem 1.2rem; border-radius:22px; background:rgba(255,255,255,.97); backdrop-filter:blur(14px); border:1px solid var(--rose); box-shadow:0 30px 80px -20px rgba(0,0,0,.5); text-align:center; visibility:hidden; }
+  .quiz h3 { font-family:"Cormorant Garamond", serif; font-weight:600; font-size:clamp(1.7rem, 5vw, 2.2rem); line-height:1.2; margin-bottom:1.1rem; }
+  .quiz .opt { display:block; width:100%; margin:.45rem 0; padding:.8rem 1rem; background:#fff; border:1.5px solid var(--rose); border-radius:14px; font-weight:700; font-size:1.08rem; color:var(--ink); cursor:pointer; transition:border-color .25s; }
+  .quiz .opt:hover { border-color:var(--red); }
+  .quiz .opt.wrong { border-color:#ddd; color:#aaa; }
+  .quiz .opt.right { background:var(--red); border-color:var(--red); color:#fff; }
+  .quiz .answer { min-height:1.7em; margin-top:.7rem; font-family:"Cormorant Garamond", serif; font-style:italic; font-size:1.25rem; color:var(--red); }
+
+  /* Carta */
+  #carta { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:12vh 1.5rem; text-align:center; color:#fff; text-shadow:0 2px 24px rgba(0,0,0,.55); }
+  #carta .label { color:#ffb3c0; }
+  .envelope { position:relative; width:min(86vw, 420px); aspect-ratio:3/2; margin:2rem auto; perspective:1200px; }
+  .env-back { position:absolute; inset:0; background:#e9b7bf; border-radius:6px; box-shadow:0 30px 60px -25px rgba(122,12,31,.5); }
+  .env-front { position:absolute; inset:0; z-index:3; border-radius:6px; background:linear-gradient(to top right, #f2c9cf 50%, transparent 50.5%) left/50.5% 100% no-repeat, linear-gradient(to top left, #f2c9cf 50%, transparent 50.5%) right/50.5% 100% no-repeat; }
+  .env-flap { position:absolute; left:0; right:0; top:0; height:62%; z-index:4; transform-origin:top; background:#e3a8b1; clip-path:polygon(0 0, 100% 0, 50% 100%); }
+  .seal { position:absolute; z-index:5; left:50%; top:62%; transform:translate(-50%,-50%); width:58px; height:58px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #e0334f, var(--wine)); color:#fff; display:grid; place-items:center; font-size:1.4rem; box-shadow:0 6px 16px rgba(122,12,31,.45); }
+  .paper { position:absolute; z-index:2; left:6%; right:6%; top:8%; height:84%; background:#fff; border-radius:4px; }
+  #lockMsg { color:rgba(255,255,255,.85); margin-bottom:1.4rem; font-size:1.1rem; }
+  #letter { display:none; max-width:620px; text-align:left; margin-top:1rem; }
+  #letter p { font-family:"Cormorant Garamond", serif; font-size:clamp(1.45rem, 4.4vw, 1.9rem); line-height:1.6; margin-bottom:1.2rem; }
+  .letter-media { margin:2.4rem auto; width:min(78vw, 380px); text-align:center; }
+  .letter-media video { width:100%; aspect-ratio:9/16; object-fit:cover; display:block; border-radius:18px; box-shadow:0 30px 60px -20px rgba(0,0,0,.7); }
+  .letter-media.print img { width:100%; display:block; border-radius:18px; box-shadow:0 30px 60px -20px rgba(0,0,0,.7); }
+  .letter-media figcaption { margin-top:.8rem; font-family:"Cormorant Garamond", serif; font-style:italic; font-size:1.25rem; color:#ffb3c0; }
+  #letter .sign { text-align:right; color:#ffb3c0; font-style:italic; }
+  .todo { background:#fff3c4; font-family:Roboto, sans-serif; font-size:.82rem; padding:0 .35rem; border-radius:3px; }
+
+  /* Final */
+  #final { min-height:100vh; position:relative; overflow:hidden; display:grid; place-items:center; text-align:center; padding:2rem; }
+  #final h2 { font-size:clamp(3.4rem, 13vw, 8.5rem); color:#fff; text-shadow:0 4px 40px rgba(0,0,0,.5); }
+  #final p { color:rgba(255,255,255,.85); font-size:1.1rem; }
+  #final .label { color:#ffb3c0; }
+  .petal { position:absolute; top:-40px; pointer-events:none; color:#ff8fa3; }
+
+  @media (max-width: 600px) { .rumpel { width:50%; left:64%; top:-6%; } .bubble { top:8%; } #gate .kicker { letter-spacing:.18em; font-size:.78rem; } }
+  @media (prefers-reduced-motion: reduce) { .scroll-cue::after { animation:none; } }
+</style>
+</head>
+<body class="locked">
+
+<canvas id="sky" aria-hidden="true"></canvas>
+<div id="dawn"></div>
+<div id="stage" aria-hidden="true">
+  <div class="slot" id="slotA"><img class="bg" src="fotos/01.jpg" alt=""><img class="fg" src="fotos/01.jpg" alt="Nós dois"></div>
+  <div class="slot" id="slotB"><img class="bg" src="fotos/02.jpg" alt=""><img class="fg" src="fotos/02.jpg" alt="Nós dois"></div>
+  <div class="vignette"></div>
+  <div id="stageDim"></div>
+</div>
+<div id="photoUI">
+  <div class="tap-hint" id="tapHint">encontre os 7 corações escondidos · toque na foto para avançar</div>
+  <div class="quiz" id="quiz" role="dialog" aria-live="polite" hidden></div>
+  <div class="hud"><span class="count" id="count">01 / 54</span><span class="hearts"><i>♥</i> <span id="hcount">0</span>/7</span></div>
+</div>
+
+<div id="gate">
+  <video class="gate-vid" src="futuro/abertura.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+  <div class="gate-in">
+    <p class="kicker">08 · 11 · 2005 — 08 · 11 · 2026</p>
+    <h1>Você não esperava menos de um <em>desenvolvedor</em>, né?</h1>
+    <button class="pill" id="open">Clica aqui gostosa ❤️</button>
+    <p class="hint">aumente o som 🎧</p>
+  </div>
+</div>
+
+<audio id="song1" src="musica.mp3" preload="auto"></audio>
+<!-- Segunda música: salve como musica2.mp3 nesta pasta; entra quando a carta abre -->
+<!-- Música da carta: "Na terra como no céu" a partir de 3:40 -->
+<audio id="song2" src="musica_carta.mp3" preload="none"></audio>
+<!-- Terceira música: entra logo depois do acapella e fica tocando durante a rolagem -->
+<audio id="song3" src="musica3.mp3" preload="auto" loop></audio>
+<!-- Quarta música: "Um Amor Puro" (Djavan) a partir de 1:33, entra quando "Na terra como no céu" termina -->
+<audio id="song4" src="musica4.mp3" preload="none" loop></audio>
+
+<main>
+  <!-- 1. Universo -->
+  <section id="cosmos">
+    <div class="cosmo-line" style="min-height:100vh; position:relative">
+      <p>Há <span id="bigbang" class="num">0,0</span> bilhões de anos, o universo começou.</p>
+      <div class="scroll-cue">role devagar</div>
+    </div>
+    <div class="cosmo-line"><p>Dois trilhões de galáxias.<small>Cada uma com centenas de bilhões de estrelas. Cada átomo de cálcio dos seus ossos e de ferro do seu sangue foi forjado dentro de uma delas.</small></p></div>
+    <div class="cosmo-line"><p>Numa delas, num braço discreto da Via Láctea, uma estrela comum: o Sol.</p></div>
+    <div class="cosmo-line"><p>E ao redor dele, tudo foi se movendo, sem pressa, até chegar a <em style="color:#ff8fa3">um dia <span class="rot" id="rotWord">específico</span>.</em></p></div>
+  </section>
+
+  <!-- 2. O céu de 08.11.2005 em 3D (ceu3d.js) -->
+  <section id="ceu">
+    <canvas id="orrery3d" aria-label="Simulação 3D do Sistema Solar até 8 de novembro de 2005"></canvas>
+    <div class="ceu-date"><span id="ceuLabel">voltando no tempo</span><strong id="ceuDate">01·01·2000</strong></div>
+    <div class="cap" data-cap="0"><b>O Sistema Solar</b><p>Cada planeta na posição real, calculada dia após dia. O tempo volta até 2000 e corre, órbita após órbita, até uma terça-feira.</p></div>
+    <div class="cap" data-cap="1"><b>Marte</b><p>Na véspera, 7 de novembro de 2005, o Sol, a Terra e Marte se alinharam. Marte estava em oposição, o mais brilhante que ficaria até 2018, mais que o dobro de Sirius.</p></div>
+    <div class="cap" data-cap="2"><b>A Lua</b><p>Às 23h57 do dia 8, no horário de Brasília, a Lua chegou exatamente à metade: quarto crescente. Daqui do hemisfério sul, iluminada do lado esquerdo.</p></div>
+    <div class="cap" data-cap="3"><b>Vênus</b><p>Poucas horas depois, à 01h33, a humanidade lançava a Venus Express rumo a Vênus, o planeta que leva o nome da deusa do amor.</p></div>
+    <div class="cap" data-cap="4"><b>A Terra</b><p>Mas o acontecimento mais importante daquele dia não foi visto por nenhum telescópio. Aconteceu aqui embaixo, em <strong style="color:#ff8fa3">Guarapari</strong>, no Espírito Santo.</p></div>
+    <div id="placeLabel"><span>Guarapari · ES</span></div>
+    <div id="ceuFlash"></div>
+  </section>
+
+  <!-- 2b. Nascimento -->
+  <section id="nasceu">
+    <figure class="polaroid"><img src="fotos/crianca.jpg" alt="Você, pequena"><figcaption>você, alguns anos depois ♥</figcaption></figure>
+    <span class="label">08 · 11 · 2005</span>
+    <h2 id="typed" aria-label="Nesse dia, o universo ganhou você, meu amor"><span class="caret"></span></h2>
+  </section>
+
+  <!-- 4. Nós: galeria imersiva -->
+  <section id="nos" aria-label="Nossas fotos">
+    <div class="nos-title"><div><span class="label" style="color:#ffb3c0">capítulo 2</span><h2>E então, <em style="color:#ff8fa3">nós.</em></h2></div></div>
+  </section>
+
+  <!-- 4b. Futuro: prints da conversa + foto do casamento (separada da galeria) -->
+  <section id="futuro">
+    <div class="fut-title"><img class="fut-bg" src="futuro/jogar.jpg" alt="Nós dois" data-ph="jogar.jpg"><span class="label">Capítulo 3</span><h2>“E se a gente jogar isso pra frente?”</h2></div>
+    <div class="phone" id="phone"></div>
+    <div id="wedding">
+      <img src="futuro/casamento.jpg" alt="Nosso casamento" data-ph="casamento.jpg">
+      <img class="w2" src="futuro/casamento2.jpg" alt="Nós no dia do casamento" data-ph="casamento2.jpg">
+      <div class="veil"></div>
+      <div class="txt"><span class="label" style="color:#ffb3c0">e então</span><h2>A gente jogou pra frente.</h2></div>
+    </div>
+  </section>
+
+  <!-- 4c. Cartório: "Assina, Shrek!" -->
+  <section id="assina">
+    <span class="label">No cartório</span>
+    <div class="sign-wrap">
+      <img class="sign-photo" src="futuro/assinando.jpg" alt="Eu assinando no cartório">
+      <div class="rumpel"><video id="rumpelVid" src="futuro/assina.mp4" playsinline preload="auto"></video></div>
+      <div class="bubble" id="bubble">Assina, Shrek!</div>
+    </div>
+    <p class="sign-cap">E eu assinei kkkk ♥</p>
+  </section>
+
+  <!-- 5. Carta -->
+  <section id="carta">
+    <span class="label">Capítulo 4</span>
+    <h2>Uma carta para você.</h2>
+    <p id="lockMsg">Toque para abrir.</p>
+    <div class="envelope" id="envelope">
+      <div class="env-back"></div>
+      <div class="paper"></div>
+      <div class="env-front"></div>
+      <div class="env-flap" id="flap"></div>
+      <div class="seal" id="seal">♥</div>
+    </div>
+    <button class="pill" id="openLetter">Abrir a carta ♥</button>
+    <div id="letter">
+      <p>Amor, que dia especial. O dia em que o amor da minha vida nasceu. Não há alegria maior do que saber que estou em mais uma primavera sua ao seu lado.</p>
+      <p>Eu sei que talvez não seja o presente que você gostaria de receber. Eu queria muito poder, hoje, nessa data, te dar o mundo, te dar tudo aquilo que você realmente merece. Eu luto todos os dias pela nossa família, pelo nosso amor, e vou continuar correndo por ele.</p>
+      <p>Só quero dizer que sou grato por tudo. Grato por ter você, por você ser minha esposa, minha amiga, amante e namorada. Pela sua dedicação com a gente, pelo esforço de sempre fazer por nós e não medir esforços.</p>
+      <p>Essa foi a forma que eu achei de demonstrar um pedacinho do quanto eu te amo, e durante o processo me emocionei muito vendo nossas fotos, vendo nossa trajetória, vendo que estamos construindo uma história linda de se admirar.</p>
+      <p>O tempo passou muito rápido, né? Esses dias falávamos que íamos casar brincando, e pra mim nunca foi uma brincadeira. Eu sempre quis ter alguém como você do lado: uma mulher linda, carismática e cuidadosa, talentosa e dedicada em tudo que faz. Nos meus sonhos, quando criança, era isso que eu sempre pedia a Deus: alguém firmeza com quem eu pudesse dividir a vida e ter certeza de que era o amor da minha vida.</p>
+      <p>Esse texto não foi ensaiado, nenhuma linha dele foi planejada; é tudo que há no meu coração. Incrível saber que, em meio a um universo tão vasto, eu consegui encontrar minha metade, a mulher dos meus sonhos. O tempo passou rápido, mas o sentimento e o amor do início permanecem. Só devemos saber lapidá-lo ainda mais, pra fortalecer ainda mais.</p>
+      <p>Há exatamente 1 ano você estava aqui gravando esse vídeo, deslumbrante como sempre, linda e gostosa, e foi um dia muito gostoso ao seu lado.</p>
+      <figure class="letter-media"><video src="futuro/espelho.mp4" muted loop playsinline preload="metadata"></video><figcaption>há exatamente 1 ano</figcaption></figure>
+      <p>E espero que a data de hoje seja ainda mais, com pessoas importantes pra nós. Sei que a pessoa que você mais queria ver no seu aniversário é sua vó, até porque ela é uma das pessoas mais importantes, se não a mais importante. Mas, mesmo que ainda não a vejamos hoje, 08/11, ainda assim espero que seu dia seja cheio de alegria, cheio de amor.</p>
+      <p>É impressionante como o tempo passou rápido, né? Um dia éramos namorados, no outro casamos. Estamos realizando nossos sonhos. Somos felizes e em breve formaremos uma família linda. Nossa casa, nossa vida é rodeada de bênçãos do Senhor; estamos nos alinhando para aquilo que já é nosso.</p>
+      <p>Iremos juntos conhecer o mundo, novos países, novas cidades. Viveremos tudo aquilo que hoje é sonho. Tenho certeza de que o universo e Deus irão alinhar a realidade ao nosso favor, e é importante que nós estejamos juntos e cuidando um do outro até lá.</p>
+      <p>Só tenho a agradecer e nada a reclamar, por ter você do lado, pelos momentos mais simples ao seu lado. E juramos que iríamos passar juntos, na alegria e na tristeza, na saúde e na doença, na pobreza e na riqueza, e assim permanecerá ❤️</p>
+      <p>Esses dias você tava pegando nossa filha na caixa pra levar pra casa…</p>
+      <figure class="letter-media"><video src="futuro/mel.mp4" muted loop playsinline preload="metadata"></video><figcaption>a Mel chegando</figcaption></figure>
+      <p>…hoje estamos em outra cidade, com uma motinha zero. Mesmo que antes ainda fosse só um sonho, comprar uma motinha, hoje realizamos. Você vê que as coisas vão se encaixando aos poucos, amor?</p>
+      <figure class="letter-media print"><img src="futuro/moto.jpg" alt="Nossa conversa sobre comprar uma moto"><figcaption>quando ainda era só um sonho</figcaption></figure>
+      <p>E estamos vivendo bem, sendo felizes. A verdade é que a vida só tem graça quando damos importância ao simples, damos importância pra aquilo que o dinheiro do mundo inteiro não pode comprar. Os momentos únicos que riqueza nenhuma pode comprar.</p>
+      <p>Que alegria poder dividir a vida com você, poder ser seu. A lealdade que existe entre nós, o companheirismo, a união… é tudo isso que dinheiro não pode comprar.</p>
+      <p id="milagre">Deus faz milagres, e eu sou um milagre. Hoje sou um homem que não precisa de droga, de bebida, que foca no futuro e vê o que realmente importa de verdade: a família, o casamento; que aprecia o verdadeiro sentido da vida. A verdade é que, quando encontramos alguém que nos levanta, que nos incentiva pro bem, o céu é apenas o limite pra todas as coisas que podemos realizar.</p>
+      <p>Sou feliz, grato por sua vida, por você existir e fazer parte da minha, meu amor. Eu te amo demais. Que essa data seja cheia de lembranças gostosas. Eu amo sua vida, minha princesa. Você é tudo que um dia sonhei; espero poder viver anos e anos e anos, e mais datas do seu aniversário ao seu lado.</p>
+      <p>Prometo que, quando eu vencer no digital (já estou vencendo, acredite), você vence junto comigo. Vai ser esposa, sócia e tudo ❤️ Gratidão pela sua vida. Gratidão a Deus por tudo.</p>
+      <p>O texto tá solto mesmo. Só estou escrevendo o que tem no meu coração kkkkkk</p>
+      <p>Que possamos nos aproximar do Pai, pois vemos que, quando nos afastamos, sentimos necessidade novamente de estar perto, sentindo a presença e vivendo nela. Que Jesus possa cuidar daquilo que só você e Ele sabem no seu íntimo. Que em seus sonhos, metas e tudo aquilo que você deseja alcançar exista Jesus. Que você continue sendo essa mulher maravilhosa, especial, que se entrega a tudo aquilo que faz. Você é admirável, meu amor. Que a presença de Deus sempre esteja conosco.</p>
+      <p class="sign">Eu te amo.<br>Marlon</p>
+    </div>
+  </section>
+
+  <!-- 6. Final -->
+  <section id="final">
+    <div>
+      <span class="label">08 · 11 · 2026</span>
+      <h2 class="serif">Feliz aniversário, minha princesa.</h2>
+      <p>feito à mão, linha por linha, para você ♥</p>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.4/dist/lenis.min.js"></script>
+<script>
+gsap.registerPlugin(ScrollTrigger);
+// sempre começa do topo (o navegador costuma restaurar a última posição de rolagem)
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+window.scrollTo(0, 0);
+// alguns navegadores ainda restauram a posição depois do carregamento: zera de novo
+addEventListener('load', () => window.scrollTo(0, 0));
+addEventListener('pageshow', () => window.scrollTo(0, 0));
+const $ = s => document.querySelector(s);
+const clamp01 = v => Math.max(0, Math.min(1, v));
+const DPR = Math.min(2, window.devicePixelRatio || 1);
+
+/* ---------- Rolagem suave ---------- */
+const lenis = window.Lenis ? new Lenis({ lerp: 0.08 }) : null;
+if (lenis) {
+  lenis.on('scroll', ScrollTrigger.update);
+  gsap.ticker.add(t => lenis.raf(t * 1000));
+  gsap.ticker.lagSmoothing(0);
+  lenis.stop();
+}
+
+/* ---------- Portão ---------- */
+const song1 = $('#song1'), song2 = $('#song2'), song3 = $('#song3'), song4 = $('#song4');
+// fade de volume com temporizador próprio (o relógio do GSAP pausa quando a aba fica oculta)
+function fadeVol(a, to, sec) {
+  if (a === song3 && to > 0 && typeof worship !== 'undefined' && worship) return; // durante a música da carta o Delacruz não volta
+  clearInterval(a._fade);
+  const from = a.volume, t0 = performance.now();
+  a._fade = setInterval(() => {
+    const k = Math.min(1, (performance.now() - t0) / (sec * 1000));
+    a.volume = from + (to - from) * k;
+    if (k === 1) clearInterval(a._fade);
+  }, 40);
+}
+// Delacruz só entra depois que o acapella do Daniel Caesar termina (nunca as duas juntas)
+let song3Started = false;
+function startSong3() {
+  if (song3Started) return; song3Started = true;
+  song1.pause();
+  song3.volume = 0;
+  song3.play().then(() => fadeVol(song3, 1, 2.5)).catch(() => {});
+}
+song1.addEventListener('ended', startSong3);
+// o acapella já toca na tela de entrada; navegadores bloqueiam som sem interação,
+// então se o autoplay for bloqueado ele começa no primeiro toque em qualquer lugar
+function startSong1() { if (song1.paused && !song1.ended && !song3Started) song1.play().catch(() => {}); }
+song1.play().catch(() => {
+  const kick = () => { startSong1(); ['pointerdown', 'touchstart', 'keydown'].forEach(ev => removeEventListener(ev, kick)); };
+  ['pointerdown', 'touchstart', 'keydown'].forEach(ev => addEventListener(ev, kick, { once: true, passive: true }));
+});
+let giftOpened = false;
+$('#open').onclick = () => {
+  setTimeout(() => { giftOpened = true; }, 1500); // espera a volta ao topo terminar
+  window.scrollTo(0, 0); // sempre começa do topo ao abrir o presente
+  startSong1(); // se já estiver tocando, não reinicia
+  song2.load(); song4.load(); if (!song3Started) song3.load(); // não corta o Delacruz se ele já estiver tocando
+  gsap.to('#gate', { autoAlpha: 0, duration: 1.6, ease: 'power2.inOut', onComplete: () => $('.gate-vid').pause() });
+  document.body.classList.remove('locked');
+  lenis && lenis.start();
+  lenis && lenis.scrollTo(0, { immediate: true, force: true });
+  ScrollTrigger.refresh();
+  gsap.from('#cosmos .cosmo-line:first-child p', { opacity: 0, y: 30, filter: 'blur(10px)', duration: 2.4, delay: .6, ease: 'power3.out' });
+  // o número sobe de 0 até 13,8, desacelerando no final
+  const bb = { v: 0 };
+  gsap.to(bb, { v: 13.8, duration: 3.2, delay: .9, ease: 'power3.out', onUpdate: () => $('#bigbang').textContent = bb.v.toFixed(1).replace('.', ',') });
+};
+
+/* ---------- 1. Universo: estrelas + galáxia em canvas ---------- */
+const sky = $('#sky'), sx = sky.getContext('2d');
+let W, H;
+function sizeSky() { W = innerWidth; H = innerHeight; sky.width = W * DPR; sky.height = H * DPR; sx.setTransform(DPR, 0, 0, DPR, 0, 0); }
+sizeSky(); addEventListener('resize', sizeSky);
+
+const stars = Array.from({ length: 420 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.3 + .2, p: Math.random() * 6.28, z: Math.random() }));
+const galaxy = Array.from({ length: 2600 }, (_, i) => {
+  const arm = i % 2, r = Math.pow(Math.random(), .65);
+  const spread = (Math.random() - .5) * (0.55 - r * .3);
+  return { r, a: arm * Math.PI + r * 5.2 + spread, s: Math.random() * 1.4 + .3, c: r < .18 ? '255,236,210' : (Math.random() < .25 ? '255,150,180' : '170,190,255'), al: Math.random() * .6 + .25 };
+});
+const far = [{ x: .15, y: .22, s: 38, rot: .6 }, { x: .85, y: .75, s: 26, rot: -.9 }, { x: .78, y: .18, s: 16, rot: .2 }];
+const cosmos = { zoom: 0, drift: 0 };
+
+function drawSky(t) {
+  if (+getComputedStyle($('#dawn')).opacity >= .999) return; // escondido: não desenha
+  sx.globalCompositeOperation = 'source-over';
+  const g = sx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#040822'); g.addColorStop(1, '#0b1446');
+  sx.fillStyle = g; sx.fillRect(0, 0, W, H);
+  // nebulosas
+  [[.25, .3, '80,40,140'], [.75, .65, '160,30,80'], [.5, .5, '30,60,160']].forEach(([x, y, c]) => {
+    const n = sx.createRadialGradient(W * x, H * y, 0, W * x, H * y, Math.max(W, H) * .45);
+    n.addColorStop(0, `rgba(${c},.22)`); n.addColorStop(1, 'rgba(0,0,0,0)');
+    sx.fillStyle = n; sx.fillRect(0, 0, W, H);
+  });
+  sx.globalCompositeOperation = 'lighter';
+  // estrelas com paralaxe
+  for (const s of stars) {
+    const y = ((s.y - cosmos.drift * (s.z * .4 + .1)) % 1 + 1) % 1;
+    sx.fillStyle = `rgba(255,255,255,${.35 + .55 * Math.abs(Math.sin(t * .0012 + s.p))})`;
+    sx.beginPath(); sx.arc(s.x * W, y * H, s.r, 0, 6.28); sx.fill();
+  }
+  // galáxias distantes
+  for (const f of far) {
+    sx.save(); sx.translate(f.x * W, f.y * H); sx.rotate(f.rot); sx.scale(1, .35);
+    const fg = sx.createRadialGradient(0, 0, 0, 0, 0, f.s);
+    fg.addColorStop(0, 'rgba(255,230,240,.55)'); fg.addColorStop(1, 'rgba(120,120,255,0)');
+    sx.fillStyle = fg; sx.beginPath(); sx.arc(0, 0, f.s, 0, 6.28); sx.fill(); sx.restore();
+  }
+  // galáxia espiral principal (aproxima ao rolar)
+  const R = Math.min(W, H) * (.42 + cosmos.zoom * .8), rot = t * .00004;
+  sx.save(); sx.translate(W / 2, H * .55); sx.rotate(-.45); sx.scale(1, .42);
+  const core = sx.createRadialGradient(0, 0, 0, 0, 0, R * .35);
+  core.addColorStop(0, 'rgba(255,240,220,.6)'); core.addColorStop(1, 'rgba(255,200,220,0)');
+  sx.fillStyle = core; sx.beginPath(); sx.arc(0, 0, R * .35, 0, 6.28); sx.fill();
+  for (const p of galaxy) {
+    const a = p.a + rot / (p.r + .15);
+    sx.fillStyle = `rgba(${p.c},${p.al})`;
+    sx.fillRect(Math.cos(a) * p.r * R, Math.sin(a) * p.r * R, p.s, p.s);
+  }
+  sx.restore();
+}
+
+// textos do universo surgem e somem com desfoque
+gsap.utils.toArray('.cosmo-line:not(:first-child) p').forEach(p => {
+  gsap.to(p, { opacity: 0, y: -30, filter: 'blur(8px)', ease: 'none', scrollTrigger: { trigger: p, start: 'bottom 35%', end: 'bottom 5%', scrub: true } });
+});
+gsap.to(cosmos, { zoom: 1, drift: 1.2, ease: 'none', scrollTrigger: { trigger: '#cosmos', start: 'top top', end: 'bottom bottom', scrub: 1 } });
+
+/* ---------- 2. O céu 3D: o progresso da rolagem vai para ceu3d.js ---------- */
+window.CEU = { p: 0 };
+const ceuSeg = (p, a, b) => clamp01((p - a) / (b - a));
+ScrollTrigger.create({ trigger: '#ceu', start: 'top top', end: '+=600%', pin: true, scrub: true, onUpdate: s => {
+  const p = window.CEU.p = s.progress;
+  gsap.set('#dawn', { opacity: ceuSeg(p, .93, 1) }); // depois do mergulho na Terra, a página fica branca
+  const idx = p < .36 ? 0 : p < .56 ? 1 : p < .72 ? 2 : p < .86 ? 3 : 4;
+  document.querySelectorAll('.cap').forEach((c, i) => {
+    const on = i === idx && p > .02 && p < .95;
+    if (c._on !== on) { c._on = on; gsap.to(c, { opacity: on ? 1 : 0, y: on ? 0 : 12, duration: .6, ease: 'power2.out', overwrite: true }); }
+  });
+} });
+gsap.ticker.add(() => drawSky(performance.now()));
+/* ---------- 2b. Nascimento: polaroid revelando + texto digitando ---------- */
+const typed = $('#typed'), caret = typed.querySelector('.caret');
+function typeText(tl) {
+  [['Nesse dia, o universo ganhou ', null], ['você', 'em'], [', meu amor', null]].forEach(([txt, tag]) => {
+    let host = null; // criado só quando a primeira letra deste trecho é digitada
+    [...txt].forEach(ch => {
+      tl.call(() => {
+        if (!tag) return typed.insertBefore(document.createTextNode(ch), caret);
+        if (!host) host = typed.insertBefore(document.createElement(tag), caret);
+        host.append(ch);
+      }, null, ch === ',' ? '+=.07' : '+=' + (0.028 + Math.random() * .03));
+      if (ch === ',') tl.to({}, { duration: .2 }); // pausa de quem pensa antes de continuar
+    });
+  });
+}
+gsap.set('.polaroid', { opacity: 0, scale: 1.15 });
+gsap.set('.polaroid img', { filter: 'brightness(2.4) grayscale(1) blur(6px)' });
+gsap.set('#nasceu .label', { opacity: 0, letterSpacing: '.9em' });
+// começa cedo (antes da seção chegar ao meio da tela) e digita junto com a foto aparecendo, para ela não passar direto
+ScrollTrigger.create({ trigger: '#nasceu', start: 'top 85%', once: true, onEnter: () => {
+  gsap.timeline()
+    .to('.polaroid', { opacity: 1, scale: 1, duration: 1.2, ease: 'power2.out' })
+    .to('.polaroid img', { filter: 'brightness(1) grayscale(0) blur(0px)', duration: 1.6, ease: 'power2.out' }, 0) // revela como foto instantânea
+    .to('#nasceu .label', { opacity: 1, letterSpacing: '.32em', duration: .9, ease: 'power3.out' }, .15);
+} });
+// a digitação começa quando a própria frase entra na tela
+ScrollTrigger.create({ trigger: '#typed', start: 'top 92%', once: true, onEnter: () => {
+  const tl = gsap.timeline({ delay: .15 });
+  typeText(tl);
+  tl.add(() => { const r = typed.querySelector('em').getBoundingClientRect(); burst(r.left + r.width / 2, r.top, 18); })
+    .to(caret, { opacity: 0, duration: .4, delay: 1.2 });
+} });
+
+/* ---------- "um dia ___": a palavra vai trocando ---------- */
+const DAY_WORDS = ['específico', 'único', 'marcado', 'especial', 'escolhido', 'abençoado', 'inesquecível', 'perfeito'];
+(function rotate(i) {
+  const el = $('#rotWord');
+  // cada palavra fica 2,4 s legível; a troca leva menos de 0,6 s
+  gsap.timeline({ delay: 2.4, onComplete: () => rotate((i + 1) % DAY_WORDS.length) })
+    .to(el, { yPercent: -50, opacity: 0, filter: 'blur(4px)', duration: .25, ease: 'power2.in' })
+    .add(() => { el.textContent = DAY_WORDS[(i + 1) % DAY_WORDS.length]; })
+    .fromTo(el, { yPercent: 50, opacity: 0, filter: 'blur(4px)' }, { yPercent: 0, opacity: 1, filter: 'blur(0px)', duration: .35, ease: 'power2.out', immediateRender: false }); // sem esconder a palavra antes da hora
+})(0);
+
+/* ---------- saídas: o texto sobe, desfoca e some ao rolar ---------- */
+function exitFx(sel) {
+  document.querySelectorAll(sel).forEach(el => gsap.to(el, { opacity: 0, y: -90, scale: .96, filter: 'blur(12px)', ease: 'none', immediateRender: false,
+    scrollTrigger: { trigger: el, start: 'top 14%', end: 'bottom -10%', scrub: true } }));
+}
+exitFx('.cosmo-line:first-child p, #nasceu .label, #typed, #carta > .label, #carta > h2, #assina > .label');
+
+/* ---------- animações de texto: palavras e letras subindo ---------- */
+function split(el, byChar) {
+  const out = [];
+  [...el.childNodes].forEach(n => {
+    if (n.nodeType === 3) {
+      const frag = document.createDocumentFragment();
+      n.textContent.split(/(\s+)/).forEach(part => {
+        if (!part) return;
+        if (/^\s+$/.test(part)) { frag.append(part); return; }
+        const pieces = byChar ? [...part] : [part];
+        const word = document.createElement('span'); word.className = 'w';
+        pieces.forEach(p => { const s = document.createElement('span'); s.textContent = p; word.append(s); out.push(s); });
+        frag.append(word);
+      });
+      n.replaceWith(frag);
+    } else if (n.nodeType === 1 && n.tagName !== 'SMALL' && n.tagName !== 'BR') {
+      const word = document.createElement('span'); word.className = 'w';
+      const s = document.createElement('span'); n.replaceWith(word); s.append(n); word.append(s); out.push(s);
+    }
+  });
+  return out;
+}
+// universo: palavras surgem do desfoque conforme a rolagem
+gsap.utils.toArray('.cosmo-line:not(:first-child) p').forEach(p => {
+  const words = split(p), small = p.querySelector('small');
+  gsap.fromTo(words, { yPercent: 110, opacity: 0, filter: 'blur(8px)' }, { yPercent: 0, opacity: 1, filter: 'blur(0px)', stagger: .06, ease: 'none',
+    scrollTrigger: { trigger: p, start: 'top 85%', end: 'top 40%', scrub: true } });
+  if (small) gsap.fromTo(small, { opacity: 0, y: 20 }, { opacity: .85, y: 0, ease: 'none', scrollTrigger: { trigger: small, start: 'top 85%', end: 'top 55%', scrub: true } });
+});
+// rótulos: letras se aproximam
+['#assina > .label', '#carta > .label', '#final .label'].forEach(sel => gsap.from(sel, { opacity: 0, letterSpacing: '.9em', duration: 1.4, ease: 'power3.out', scrollTrigger: { trigger: sel, start: 'top 85%' } }));
+// títulos: palavras sobem de dentro de uma máscara
+['#carta h2'].forEach(sel => gsap.from(split($(sel)), { yPercent: 110, opacity: 0, stagger: .09, duration: 1, ease: 'power4.out', scrollTrigger: { trigger: sel, start: 'top 80%' } }));
+const finalChars = split($('#final h2'), true);
+
+function burst(x, y, n) {
+  for (let i = 0; i < n; i++) {
+    const h = document.createElement('span'); h.className = 'fly'; h.textContent = '♥';
+    h.style.left = x + 'px'; h.style.top = y + 'px'; h.style.fontSize = (12 + Math.random() * 22) + 'px';
+    document.body.appendChild(h);
+    const a = Math.random() * 6.28, d = 80 + Math.random() * 220;
+    gsap.to(h, { x: Math.cos(a) * d, y: Math.sin(a) * d - 60, rotation: Math.random() * 90 - 45, opacity: 0, duration: 1.6 + Math.random(), ease: 'power3.out', onComplete: () => h.remove() });
+  }
+}
+
+/* ---------- 4. Galeria imersiva ---------- */
+const TOTAL = 54, SLIDE_MS = 2300;
+const PHOTOS = Array.from({ length: TOTAL }, (_, i) => `fotos/${String(i + 1).padStart(2, '0')}.jpg`);
+const HEART_AT = [4, 11, 18, 26, 33, 41, 49];   // fotos com coração escondido (1 = primeira)
+const QUIZ = []; // quiz removido a pedido
+const slots = [$('#slotA'), $('#slotB')];
+gsap.set('#slotB', { clipPath: 'circle(0% at 50% 50%)' });
+let cur = -1, front = 0, timer = null, busy = false, paused = false, running = false, hearts = 0, seen = new Set();
+const EFFECTS = [
+  { from: 'circle(0% at 50% 50%)', to: 'circle(150% at 50% 50%)' },
+  { from: 'inset(100% 0% 0% 0%)', to: 'inset(0% 0% 0% 0%)' },
+  { from: 'circle(0% at 20% 80%)', to: 'circle(160% at 20% 80%)' },
+  { from: 'inset(0% 50% 0% 50%)', to: 'inset(0% 0% 0% 0%)' },
+];
+
+function load(slot, i) {
+  return new Promise(res => {
+    const [bg, fg] = slot.querySelectorAll('img');
+    bg.src = fg.src = PHOTOS[i];
+    fg.decode ? fg.decode().then(res, res) : (fg.onload = res);
+  });
+}
+async function go(i) {
+  if (busy) return; busy = true;
+  i = (i + TOTAL) % TOTAL;
+  const inS = slots[1 - front], outS = slots[front];
+  await load(inS, i);
+  new Image().src = PHOTOS[(i + 1) % TOTAL];
+  const fx = EFFECTS[i % EFFECTS.length];
+  gsap.set(inS, { zIndex: 2, clipPath: fx.from }); gsap.set(outS, { zIndex: 1 });
+  const fg = inS.querySelector('.fg');
+  gsap.killTweensOf(fg);
+  gsap.fromTo(fg, { scale: 1.14, filter: 'blur(6px)' }, { scale: 1, filter: 'blur(0px)', duration: SLIDE_MS / 1000 + 1.2, ease: 'power1.out' }); // Ken Burns
+  gsap.to(outS.querySelector('.fg'), { scale: .95, filter: 'blur(6px) brightness(.7)', duration: 1.05, ease: 'power2.inOut' });
+  await gsap.to(inS, { clipPath: fx.to, duration: 1.05, ease: 'power3.inOut' });
+  front = 1 - front; cur = i; busy = false;
+  seen.add(i); $('#count').textContent = `${String(i + 1).padStart(2, '0')} / ${TOTAL}`;
+  if (!inNos) return; // corações e quiz só aparecem na seção das fotos
+  if (HEART_AT.includes(i + 1) && !collected.has(i)) spawnHeart(i);
+  const q = QUIZ.find(q => q.at === i + 1 && !q.done);
+  if (q) openQuiz(q);
+}
+function play() { clearInterval(timer); timer = setInterval(() => !paused && go(cur + 1), SLIDE_MS); }
+
+// coração escondido
+const collected = new Set();
+function spawnHeart(i) {
+  const b = document.createElement('button');
+  b.className = 'hidden-heart'; b.textContent = '♥'; b.setAttribute('aria-label', 'coração escondido');
+  b.style.left = (12 + Math.random() * 70) + '%'; b.style.top = (15 + Math.random() * 55) + '%';
+  $('#photoUI').appendChild(b);
+  gsap.fromTo(b, { scale: 0, opacity: 0 }, { scale: 1, opacity: .85, duration: .8, ease: 'back.out(2)' });
+  gsap.to(b, { y: -10, duration: 1.1, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+  b.onclick = e => {
+    e.stopPropagation(); collected.add(i); hearts = collected.size; b.remove();
+    const r = b.getBoundingClientRect(), dst = $('#hcount').getBoundingClientRect();
+    burst(r.left + 29, r.top + 29, 12);
+    const f = document.createElement('span'); f.className = 'fly'; f.textContent = '♥'; f.style.left = r.left + 'px'; f.style.top = r.top + 'px';
+    document.body.appendChild(f);
+    gsap.to(f, { x: dst.left - r.left, y: dst.top - r.top, scale: .4, duration: .9, ease: 'power2.in', onComplete: () => {
+      f.remove(); $('#hcount').textContent = hearts;
+      gsap.fromTo('.hud .hearts', { scale: 1.5 }, { scale: 1, duration: .6, ease: 'elastic.out(1,.4)' });
+      if (hearts === HEART_AT.length) allHearts();
+    } });
+  };
+  setTimeout(() => b.isConnected && gsap.to(b, { opacity: 0, scale: 0, duration: .6, onComplete: () => b.remove() }), SLIDE_MS * 2.2);
+}
+
+// quiz
+function openQuiz(q) {
+  paused = true;
+  $('#qText').textContent = q.q; $('#qAns').textContent = ''; $('#qOpts').innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const b = document.createElement('button'); b.className = 'opt'; b.textContent = o;
+    b.onclick = e => {
+      e.stopPropagation();
+      if (i !== q.right) { b.classList.add('wrong'); gsap.fromTo(b, { x: -8 }, { x: 0, duration: .5, ease: 'elastic.out(1,.3)' }); return; }
+      b.classList.add('right'); $('#qAns').textContent = q.msg; q.done = true;
+      const r = b.getBoundingClientRect(); burst(r.left + r.width / 2, r.top, 14);
+      gsap.to('#quiz', { autoAlpha: 0, y: 20, duration: .7, delay: 2.2, ease: 'power2.in', onComplete: () => { paused = false; play(); } });
+    };
+    $('#qOpts').appendChild(b);
+  });
+  gsap.fromTo('#quiz', { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: .9, ease: 'power3.out' });
+}
+$('#quiz').addEventListener('click', e => e.stopPropagation());
+
+// toque para avançar
+$('#nos').addEventListener('click', () => { if (!paused && running) { go(cur + 1); play(); } });
+
+let inNos = false, letterOpen = false;
+// o palco aparece quando a galeria chega e fica fixo até o fim (carta e final por cima)
+ScrollTrigger.create({ trigger: '#nos', start: 'top bottom',
+  onEnter: () => gsap.to('#stage', { autoAlpha: 1, duration: .8 }),
+  onLeaveBack: () => gsap.to('#stage', { autoAlpha: 0, duration: .6 }) });
+ScrollTrigger.create({
+  trigger: '#nos', start: 'top 60%', end: 'bottom 40%',
+  onToggle: st => {
+    inNos = st.isActive;
+    gsap.to('#photoUI', { autoAlpha: inNos ? 1 : 0, duration: .5 });
+    if (inNos) { startGallery(); gsap.to('#stageDim', { opacity: 0, duration: .8 }); }
+    else if (paused) { gsap.set('#quiz', { autoAlpha: 0 }); paused = false; } // saiu no meio do quiz: segue passando
+  },
+});
+// escurece as fotos para ler a carta e o final; elas continuam passando
+ScrollTrigger.create({ trigger: '#carta', start: 'top 70%', end: 'bottom 30%', onToggle: st => st.isActive && gsap.to('#stageDim', { opacity: letterOpen ? .72 : .5, duration: 1 }) });
+ScrollTrigger.create({ trigger: '#final', start: 'top 70%', onEnter: () => gsap.to('#stageDim', { opacity: .55, duration: 1 }), onLeaveBack: () => gsap.to('#stageDim', { opacity: letterOpen ? .72 : .5, duration: 1 }) });
+function startGallery() {
+  if (!running) {
+    running = true;
+    gsap.timeline()
+      .from('.nos-title h2', { opacity: 0, y: 30, filter: 'blur(10px)', duration: 1.6, ease: 'power3.out' })
+      .to('.nos-title', { opacity: 0, duration: 1.2, delay: 1 })
+      .add(() => go(0));
+    gsap.to('#tapHint', { opacity: 0, delay: 9, duration: 1.5 });
+    play();
+  }
+}
+
+/* ---------- 4b. Futuro ---------- */
+// Prints da conversa: salve em futuro/print1.jpg, print2.jpg... e liste aqui, na ordem.
+// focus: retângulos nítidos [x1, y1, x2, y2] em pixels do print (739x1600); soft: levemente desfocados; o resto fica embaçado
+const PRINTS = [
+  { src: 'futuro/print1.jpg', focus: [[30, 605, 550, 728], [200, 750, 718, 958], [30, 983, 528, 1222]],
+    note: 'Estava mais do que disposto.' },
+  { src: 'futuro/print2.jpg', focus: [[30, 700, 545, 965]],
+    note: 'E é verdade: sempre estamos do lado um do outro ❤️' },
+  { src: 'futuro/print3.jpg', focus: [[255, 225, 712, 372], [30, 395, 325, 472], [180, 498, 712, 645], [218, 935, 712, 1038]],
+    note: 'E realmente Deus escutou nossas orações.', verse: '“E tudo o que pedirem em oração, se crerem, vocês receberão.”', ref: 'Mateus 21:22' },
+  { src: 'futuro/print4.jpg', focus: [[243, 1055, 718, 1262]], soft: [[243, 310, 708, 1048]],
+    note: 'E de fato, tudo aquilo que falamos se cumpriu. E não vai ser diferente quando digo que nosso futuro será brilhante juntos, cheio de prosperidade e sonhos realizados.' },
+];
+const insetOf = ([x1, y1, x2, y2]) => 'inset(' + (y1 / 16) + '% ' + (100 - x2 / 7.39) + '% ' + (100 - y2 / 16) + '% ' + (x1 / 7.39) + '% round 14px)';
+// Arquivo que ainda não existe aparece como aviso no lugar da imagem.
+function placeholder(img) {
+  img.onerror = null;
+  img.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 600"><rect width="300" height="600" fill="#fff5f6"/><text x="150" y="300" text-anchor="middle" font-family="Roboto, sans-serif" font-size="16" font-weight="700" fill="#c8102e">coloque ' + img.dataset.ph + '</text></svg>');
+}
+const printEls = PRINTS.map((p, i) => {
+  const box = document.createElement('div'); box.className = 'print';
+  const layer = (cls, rect) => {
+    const im = document.createElement('img'); im.className = cls; im.src = p.src; im.alt = cls === 'base' ? 'Nossa conversa' : '';
+    if (rect) im.style.clipPath = insetOf(rect);
+    box.appendChild(im); return im;
+  };
+  const base = layer('base');
+  base.dataset.ph = p.src.split('/').pop(); base.onerror = () => placeholder(base);
+  const soft = (p.soft || []).map(r => layer('soft', r));
+  const focus = p.focus.map(r => layer('focus', r));
+  gsap.set(soft, { opacity: 0, filter: 'blur(1.2px)' }); gsap.set(focus, { opacity: 0 });
+  $('#phone').appendChild(box);
+  if (i) gsap.set(box, { yPercent: 105 });
+  let note = null;
+  if (p.note) { // fala de confirmação ao lado do print
+    note = document.createElement('div'); note.className = 'print-note' + (p.note.length > 80 ? ' long' : '');
+    note.innerHTML = '<p></p>' + (p.verse ? '<blockquote></blockquote><cite></cite>' : '');
+    note.querySelector('p').textContent = p.note;
+    if (p.verse) { note.querySelector('blockquote').textContent = p.verse; note.querySelector('cite').textContent = p.ref; }
+    $('#futuro').appendChild(note);
+    gsap.set(note, { autoAlpha: 0 });
+  }
+  return { box, base, soft, focus, note };
+});
+const FOCUS_BLUR = 'blur(3px) brightness(.72) saturate(.7)';
+document.querySelectorAll('#wedding img, .fut-bg').forEach(im => { im.onerror = () => placeholder(im); if (im.complete && !im.naturalWidth) placeholder(im); });
+const fut = gsap.timeline({ scrollTrigger: { trigger: '#futuro', start: 'top top', end: '+=' + (PRINTS.length * 90 + 220) + '%', pin: true, scrub: 1 } });
+// o título aparece sozinho, sai, e só então o celular entra (no celular os dois não se sobrepõem)
+fut.from('.fut-title > *', { opacity: 0, y: 60, filter: 'blur(14px)', stagger: .15, duration: .7 })
+   .to('.fut-title', { opacity: 0, y: -60, filter: 'blur(12px)', duration: .6 }, '+=.6')
+   .from('#phone', { yPercent: 30, opacity: 0, rotation: -6, scale: .9, duration: .8, ease: 'power3.out' }, '-=.2');
+printEls.forEach((p, i) => {
+  if (i) fut.to(p.box, { yPercent: 0, duration: 1, ease: 'power2.inOut' }, '+=.3');
+  fut.to(p.base, { filter: FOCUS_BLUR, duration: .6 }, i ? '-=.1' : '+=.1')
+     .to(p.soft.length ? p.soft : {}, { opacity: 1, duration: .5 }, '<')
+     .to(p.focus, { opacity: 1, stagger: .15, duration: .5 }, '<');
+  if (p.note) fut.fromTo(p.note, { autoAlpha: 0, y: 40, filter: 'blur(10px)' }, { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: .6, ease: 'power3.out' }, '-=.2');
+  fut.to({}, { duration: p.note ? 1.4 : .9 }); // tempo para ler
+  if (p.note) fut.to(p.note, { autoAlpha: 0, y: -30, filter: 'blur(8px)', duration: .4 });
+});
+fut.to('#phone', { scale: .9, rotation: 3, duration: .6 }, '+=.4')
+   .to('#wedding', { clipPath: 'circle(150% at 50% 58%)', duration: 1.6, ease: 'power2.inOut' })
+   .fromTo('#wedding img', { scale: 1.25 }, { scale: 1, duration: 2, ease: 'power2.out' }, '<')
+   .from('#wedding .txt > *', { opacity: 0, y: 30, stagger: .2, duration: .8 }, '-=.8')
+   .to('#wedding .w2', { opacity: 1, duration: 1.2, ease: 'power1.inOut' }, '+=.6')
+   .to({}, { duration: .6 });
+
+/* ---------- 4c. Cartório: o personagem cobra a assinatura ---------- */
+const rv = $('#rumpelVid');
+// a música abaixa só enquanto o vídeo está tocando (fala por cima) e volta quando ele para
+rv.addEventListener('play', () => !worship && fadeVol(song3, .15, .6));
+rv.addEventListener('pause', () => !worship && fadeVol(song3, 1, 1.5));
+function assina() {
+  rv.currentTime = 0;
+  gsap.timeline()
+    .to('.rumpel', { scale: 1, duration: .9, ease: 'elastic.out(1, .55)' })
+    .to('#bubble', { scale: 1, duration: .6, ease: 'back.out(2.5)' }, '-=.4')
+    .add(() => rv.play().catch(() => {}), '-=.5')
+    .to('#bubble', { rotation: 4, duration: .2, yoyo: true, repeat: 15, ease: 'sine.inOut' }, '<');
+}
+rv.addEventListener('ended', () => {
+  gsap.to('#bubble', { rotation: 0, duration: .3, overwrite: true });
+  gsap.to('.sign-cap', { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out' });
+});
+gsap.set('.sign-cap', { y: 20 }); gsap.set('.rumpel', { xPercent: -50, scale: 0 }); gsap.set('#bubble', { scale: 0 });
+gsap.from('#assina .sign-wrap', { opacity: 0, y: 60, scale: .95, duration: 1.4, ease: 'power3.out', scrollTrigger: { trigger: '#assina', start: 'top 70%' } });
+let rumpelShown = false;
+function assinaPlay() {
+  if (rumpelShown || !giftOpened) return; // a fala toca uma única vez, e só depois de abrir o presente
+  const r = $('#assina .sign-wrap').getBoundingClientRect();
+  if (r.bottom < 0 || r.top > innerHeight) return; // só quando a seção está mesmo na tela (não em saltos de rolagem)
+  rumpelShown = true; assina();
+}
+function assinaStop() { rv.pause(); gsap.to('#bubble', { rotation: 0, duration: .3, overwrite: true }); }
+ScrollTrigger.create({ trigger: '#assina .sign-wrap', start: 'top 70%', end: 'bottom 30%',
+  onEnter: assinaPlay, onEnterBack: assinaPlay, onLeave: assinaStop, onLeaveBack: assinaStop });
+
+/* ---------- 5. Carta ---------- */
+function allHearts() {
+  const r = $('.hud .hearts').getBoundingClientRect();
+  burst(r.left, r.top, 30);
+  const t = document.createElement('div'); t.className = 'quiz'; t.style.visibility = 'visible'; t.style.bottom = '40%';
+  t.innerHTML = '<h3>Você achou todos os corações.</h3><div class="answer">Eles sempre foram seus. ♥</div>';
+  $('#photoUI').appendChild(t);
+  gsap.fromTo(t, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: .8, ease: 'power3.out' });
+  gsap.to(t, { opacity: 0, delay: 3.5, duration: .8, onComplete: () => t.remove() });
+}
+let worship = false;
+function toWorship() {
+  if (worship) return; worship = true;
+  fadeVol(song3, 0, 2);
+  setTimeout(() => worship && song3.pause(), 2100);
+  song2.volume = 0;
+  song2.play().then(() => fadeVol(song2, 1, 3)).catch(() => {});
+}
+let djavan = false;
+function toDelacruz() {
+  if (!worship || djavan) return; worship = false; // depois que o Djavan entra, não volta mais para o Delacruz
+  fadeVol(song2, 0, 2);
+  setTimeout(() => !worship && song2.pause(), 2100);
+  song3.play().then(() => fadeVol(song3, 1, 2.5)).catch(() => {});
+}
+// trava: enquanto a música da carta estiver ativa, qualquer tentativa de tocar o Delacruz é cancelada
+song3.addEventListener('play', () => { if (worship) song3.pause(); });
+// quando "Na terra como no céu" termina, entra o Djavan; o Delacruz continua travado
+song2.addEventListener('ended', () => { djavan = true; song4.volume = 0; song4.play().then(() => fadeVol(song4, 1, 2.5)).catch(() => {}); });
+$('#openLetter').onclick = () => {
+  letterOpen = true;
+  gsap.to('#stageDim', { opacity: .72, duration: 1.4 });
+  $('#openLetter').style.display = 'none'; $('#lockMsg').style.display = 'none';
+  // a carta e a troca de música são montadas já no clique; o envelope é só a animação por cima
+  $('#letter').style.display = 'block';
+  gsap.set('#letter > *', { opacity: 0, y: 30, filter: 'blur(8px)' });
+  const relayout = () => { lenis && lenis.resize(); ScrollTrigger.refresh(); };
+  relayout();
+  // cada trecho da carta aparece quando chega na tela
+  ScrollTrigger.batch('#letter > *', { start: 'top 88%', once: true,
+    onEnter: els => gsap.to(els, { opacity: 1, y: 0, filter: 'blur(0px)', stagger: .2, duration: 1.2, ease: 'power3.out' }) });
+  // troca de música pela rolagem: em "Deus faz milagres" o Delacruz sai e entra "Na terra como no céu" (3:40)
+  ScrollTrigger.create({ trigger: '#milagre', start: 'top 75%', onEnter: toWorship, onEnterBack: toWorship, onLeaveBack: toDelacruz });
+  // vídeos da carta só rodam quando estão na tela
+  document.querySelectorAll('.letter-media video').forEach(v => new IntersectionObserver(es => es[0].isIntersecting ? v.play().catch(() => {}) : v.pause(), { threshold: .3 }).observe(v));
+  gsap.timeline({ onComplete: relayout })
+    .to('#seal', { scale: 0, opacity: 0, duration: .5, ease: 'back.in(2)' })
+    .to('#flap', { rotationX: 180, duration: 1.1, ease: 'power2.inOut' })
+    .set('#flap', { zIndex: 1 })
+    .to('.paper', { y: '-55%', duration: 1.1, ease: 'power3.out' })
+    .to('#envelope', { opacity: 0, height: 0, margin: 0, duration: .9, ease: 'power2.inOut', delay: .4 });
+  setTimeout(relayout, 4500); // garante as posições mesmo se a animação atrasar
+};
+gsap.from('#carta > :not(#letter):not(#openLetter):not(h2):not(.label)', { opacity: 0, y: 40, stagger: .15, duration: 1.2, ease: 'power3.out', scrollTrigger: { trigger: '#carta', start: 'top 70%' } });
+
+/* ---------- 6. Final: pétalas ---------- */
+ScrollTrigger.create({ trigger: '#final', start: 'top 60%', once: true, onEnter: () => {
+  gsap.from(finalChars, { yPercent: 120, opacity: 0, rotation: 8, stagger: .05, duration: 1.1, ease: 'back.out(2)' });
+  for (let i = 0; i < 40; i++) {
+    const p = document.createElement('span'); p.className = 'petal'; p.textContent = '♥';
+    p.style.left = Math.random() * 100 + '%'; p.style.fontSize = (10 + Math.random() * 20) + 'px'; p.style.opacity = .25 + Math.random() * .5;
+    $('#final').appendChild(p);
+    gsap.to(p, { y: innerHeight + 80, x: `+=${Math.random() * 160 - 80}`, rotation: Math.random() * 360, duration: 7 + Math.random() * 7, delay: Math.random() * 8, repeat: -1, ease: 'none' });
+  }
+} });
+</script>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
+<script type="module" src="ceu3d.js?v=11"></script>
+</body>
+</html>
