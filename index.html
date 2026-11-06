@@ -380,19 +380,25 @@ const song1 = $('#song1'), song2 = $('#song2'), song3 = $('#song3'), song4 = $('
 const MUTE_TEST = /[?&]mute/.test(location.search);
 if (MUTE_TEST) document.querySelectorAll('audio, video').forEach(m => { m.muted = true; });
 // iPhone não deixa mudar o volume por código: lá o "abaixar" vira pausar e o "subir" vira tocar
-const CAN_VOL = (() => { const a = document.createElement('audio'); a.volume = .5; return a.volume === .5; })();
+const CAN_VOL = !/[?&]ios/.test(location.search) && (() => { const a = document.createElement('audio'); a.volume = .5; return a.volume === .5; })(); // ?ios simula o iPhone nos testes
 // celulares só deixam tocar mídias que já foram "liberadas" por um toque: libera todas no primeiro toque
-let unlocked = false;
 function unlockMedia() {
-  if (unlocked) return; unlocked = true;
   [song2, song3, song4, $('#rumpelVid')].forEach(m => {
-    if (!m.paused) return;
+    if (m._unlocked || m._priming || !m.paused) return; // cada mídia é liberada uma vez; se falhar, tenta no próximo toque
     m._priming = true; m.muted = true;
-    const done = () => { if (!m._wanted) { m.pause(); m.currentTime = 0; } m.muted = MUTE_TEST; m._priming = false; };
-    m.play().then(done, done);
+    const done = ok => { if (ok) m._unlocked = true; if (!m._wanted) { m.pause(); m.currentTime = 0; } m.muted = MUTE_TEST; m._priming = false; };
+    m.play().then(() => done(true), () => done(false));
   });
 }
 // trava geral: nenhuma música ou vídeo toca se não for a vez dele (evita tudo tocando junto)
+// iPhone (sem controle de volume): quando uma mídia começa, todas as outras param na hora
+if (!CAN_VOL) {
+  const all = [song1, song2, song3, song4, $('#rumpelVid')];
+  all.forEach(m => m.addEventListener('play', () => {
+    if (m._priming) return;
+    all.forEach(o => { if (o !== m && !o.paused && !o._priming) o.pause(); });
+  }));
+}
 [song2, song3, song4, $('#rumpelVid')].forEach(m => m.addEventListener('play', () => { if (!m._wanted && !m._priming) m.pause(); }));
 function fadeVol(a, to, sec) {
   if (a === song3 && to > 0 && typeof worship !== 'undefined' && worship) return; // durante a música da carta o Delacruz não volta
@@ -418,8 +424,9 @@ song1.addEventListener('ended', startSong3);
 // então se o autoplay for bloqueado ele começa no primeiro toque em qualquer lugar
 function startSong1() { if (song1.paused && !song1.ended && !song3Started) song1.play().catch(() => {}); }
 song1.play().catch(() => {
-  const kick = () => { startSong1(); unlockMedia(); ['pointerdown', 'touchstart', 'keydown'].forEach(ev => removeEventListener(ev, kick)); };
-  ['pointerdown', 'touchstart', 'keydown'].forEach(ev => addEventListener(ev, kick, { once: true, passive: true }));
+  // iPhone só libera áudio no fim do toque (touchend/click), não no começo
+  const kick = () => { startSong1(); unlockMedia(); if (!song1.paused) ['touchend', 'click', 'keydown'].forEach(ev => removeEventListener(ev, kick)); };
+  ['touchend', 'click', 'keydown'].forEach(ev => addEventListener(ev, kick, { passive: true }));
 });
 let giftOpened = false;
 $('#open').onclick = () => {
