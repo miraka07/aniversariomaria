@@ -226,6 +226,8 @@
 <audio id="song3" src="musica3.mp3" preload="auto" loop></audio>
 <!-- Quarta música: "Um Amor Puro" (Djavan) a partir de 1:33, entra quando "Na terra como no céu" termina -->
 <audio id="song4" src="musica4.mp3" preload="none" loop></audio>
+<!-- fala do Shrek separada: no iPhone ela toca pelo player único (o vídeo fica mudo) -->
+<audio id="shrekAudio" src="futuro/assina_audio.mp3" preload="none"></audio>
 
 <main>
   <!-- 1. Universo -->
@@ -386,8 +388,8 @@ const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform 
   || matchMedia('(pointer: coarse)').matches || !CAN_VOL;
 if (IOS) {
   const player = new Audio(); player.preload = 'auto'; player.muted = MUTE_TEST;
-  let current = null;
-  [song1, song2, song3, song4].forEach(s => {
+  let current = null, shouldPlay = false;
+  [song1, song2, song3, song4, $('#shrekAudio')].forEach(s => {
     const src = s.getAttribute('src'), loop = s.loop;
     s.removeAttribute('src'); s.load(); // o elemento original não carrega nem toca mais nada
     s._pos = 0;
@@ -401,19 +403,21 @@ if (IOS) {
         current = s; player.loop = loop; player.src = src;
         const pos = s._pos; if (pos) player.addEventListener('loadedmetadata', () => { player.currentTime = pos; }, { once: true });
       }
-      s._ended = false;
+      s._ended = false; shouldPlay = true;
       const pr = player.play();
       pr.then(() => s.dispatchEvent(new Event('play')), () => {});
       return pr;
     };
-    s.pause = () => { if (current === s) { s._pos = player.currentTime; player.pause(); } };
+    s.pause = () => { if (current === s) { s._pos = player.currentTime; shouldPlay = false; player.pause(); } };
     s.load = () => {};
   });
-  player.addEventListener('ended', () => { if (current) { current._ended = true; current._pos = 0; current.dispatchEvent(new Event('ended')); } });
+  // se o iPhone pausar a música sozinho (ligação, outro app), ela volta no próximo toque na tela
+  ['touchend', 'click'].forEach(ev => addEventListener(ev, () => { if (shouldPlay && player.paused && !player.ended) player.play().catch(() => {}); }, { passive: true }));
+  player.addEventListener('ended', () => { shouldPlay = false; if (current) { current._ended = true; current._pos = 0; current.dispatchEvent(new Event('ended')); } });
 }
 // celulares só deixam tocar mídias que já foram "liberadas" por um toque: libera todas no primeiro toque
 function unlockMedia() {
-  (IOS ? [$('#rumpelVid')] : [song2, song3, song4, $('#rumpelVid')]).forEach(m => {
+  (IOS ? [] : [song2, song3, song4, $('#rumpelVid')]).forEach(m => {
     if (m._unlocked || m._priming || !m.paused) return; // cada mídia é liberada uma vez; se falhar, tenta no próximo toque
     m._priming = true; m.muted = true;
     const done = ok => { if (ok) m._unlocked = true; if (!m._wanted) { m.pause(); m.currentTime = 0; } m.muted = MUTE_TEST; m._priming = false; };
@@ -423,7 +427,8 @@ function unlockMedia() {
 // trava geral: nenhuma música ou vídeo toca se não for a vez dele (evita tudo tocando junto)
 // iPhone (sem controle de volume): quando uma mídia começa, todas as outras param na hora
 if (IOS) {
-  const all = [song1, song2, song3, song4, $('#rumpelVid')];
+  $('#rumpelVid').muted = true; // no iPhone o vídeo é sempre mudo; a fala sai pelo player único
+  const all = [song1, song2, song3, song4, $('#shrekAudio')];
   all.forEach(m => m.addEventListener('play', () => {
     if (m._priming) return;
     all.forEach(o => { if (o !== m && !o.paused && !o._priming) o.pause(); });
@@ -938,14 +943,18 @@ fut.to('#phone', { scale: .9, rotation: 3, duration: .6 }, '+=.4')
 /* ---------- 4c. Cartório: o personagem cobra a assinatura ---------- */
 const rv = $('#rumpelVid');
 // a música abaixa só enquanto o vídeo está tocando (fala por cima) e volta quando ele para
-rv.addEventListener('play', () => !rv._priming && !worship && fadeVol(song3, .15, .6));
-rv.addEventListener('pause', () => !rv._priming && !worship && fadeVol(song3, 1, 1.5));
+rv.addEventListener('play', () => !IOS && !rv._priming && !worship && fadeVol(song3, .15, .6));
+rv.addEventListener('pause', () => !IOS && !rv._priming && !worship && fadeVol(song3, 1, 1.5));
+// iPhone: a fala do Shrek toca no player único e o Delacruz volta quando ela termina
+const shrekAudio = $('#shrekAudio');
+const backToDelacruz = () => { if (song3._wanted && !worship && song3.paused) song3.play().catch(() => {}); };
+shrekAudio.addEventListener('ended', backToDelacruz);
 function assina() {
   rv.currentTime = 0;
   gsap.timeline()
     .to('.rumpel', { scale: 1, duration: .9, ease: 'elastic.out(1, .55)' })
     .to('#bubble', { scale: 1, duration: .6, ease: 'back.out(2.5)' }, '-=.4')
-    .add(() => rv.play().catch(() => {}), '-=.5')
+    .add(() => { rv.play().catch(() => {}); if (IOS) { shrekAudio._wanted = true; shrekAudio.play().catch(() => {}); } }, '-=.5')
     .to('#bubble', { rotation: 4, duration: .2, yoyo: true, repeat: 15, ease: 'sine.inOut' }, '<');
 }
 rv.addEventListener('ended', () => {
@@ -961,7 +970,7 @@ function assinaPlay() {
   if (r.bottom < 0 || r.top > innerHeight) return; // só quando a seção está mesmo na tela (não em saltos de rolagem)
   rumpelShown = true; $('#rumpelVid')._wanted = true; assina();
 }
-function assinaStop() { rv.pause(); gsap.to('#bubble', { rotation: 0, duration: .3, overwrite: true }); }
+function assinaStop() { rv.pause(); if (IOS && !shrekAudio.paused) { shrekAudio.pause(); backToDelacruz(); } gsap.to('#bubble', { rotation: 0, duration: .3, overwrite: true }); }
 ScrollTrigger.create({ trigger: '#assina .sign-wrap', start: 'top 70%', end: 'bottom 30%',
   onEnter: assinaPlay, onEnterBack: assinaPlay, onLeave: assinaStop, onLeaveBack: assinaStop });
 
