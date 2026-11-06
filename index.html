@@ -381,7 +381,9 @@ if (MUTE_TEST) document.querySelectorAll('audio, video').forEach(m => { m.muted 
 // iPhone não deixa mudar o volume por código: lá o "abaixar" vira pausar e o "subir" vira tocar
 const CAN_VOL = !/[?&]ios/.test(location.search) && (() => { const a = document.createElement('audio'); a.volume = .5; return a.volume === .5; })(); // ?ios simula o iPhone nos testes
 // iPhone: UM único player toca todas as músicas (troca de faixa). Assim é impossível duas tocarem juntas.
-const IOS = !CAN_VOL;
+// qualquer iPhone/iPad/celular/tablet usa o player único (não confia só na detecção de volume)
+const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  || matchMedia('(pointer: coarse)').matches || !CAN_VOL;
 if (IOS) {
   const player = new Audio(); player.preload = 'auto'; player.muted = MUTE_TEST;
   let current = null;
@@ -420,7 +422,7 @@ function unlockMedia() {
 }
 // trava geral: nenhuma música ou vídeo toca se não for a vez dele (evita tudo tocando junto)
 // iPhone (sem controle de volume): quando uma mídia começa, todas as outras param na hora
-if (!CAN_VOL) {
+if (IOS) {
   const all = [song1, song2, song3, song4, $('#rumpelVid')];
   all.forEach(m => m.addEventListener('play', () => {
     if (m._priming) return;
@@ -430,7 +432,7 @@ if (!CAN_VOL) {
 [song2, song3, song4, $('#rumpelVid')].forEach(m => m.addEventListener('play', () => { if (!m._wanted && !m._priming) m.pause(); }));
 function fadeVol(a, to, sec) {
   if (a === song3 && to > 0 && typeof worship !== 'undefined' && worship) return; // durante a música da carta o Delacruz não volta
-  if (!CAN_VOL) { clearInterval(a._fade); if (to <= .2) a.pause(); else if (a.paused && a._wanted) a.play().catch(() => {}); return; }
+  if (IOS) { clearInterval(a._fade); if (to <= .2) a.pause(); else if (a.paused && a._wanted) a.play().catch(() => {}); return; }
   clearInterval(a._fade);
   const from = a.volume, t0 = performance.now();
   a._fade = setInterval(() => {
