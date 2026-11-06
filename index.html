@@ -360,8 +360,24 @@ if (lenis) {
 /* ---------- Portão ---------- */
 const song1 = $('#song1'), song2 = $('#song2'), song3 = $('#song3'), song4 = $('#song4');
 // fade de volume com temporizador próprio (o relógio do GSAP pausa quando a aba fica oculta)
+// ?mute na URL silencia tudo (só para testes)
+const MUTE_TEST = /[?&]mute/.test(location.search);
+if (MUTE_TEST) document.querySelectorAll('audio, video').forEach(m => { m.muted = true; });
+// iPhone não deixa mudar o volume por código: lá o "abaixar" vira pausar e o "subir" vira tocar
+const CAN_VOL = (() => { const a = document.createElement('audio'); a.volume = .5; return a.volume === .5; })();
+// celulares só deixam tocar mídias que já foram "liberadas" por um toque: libera todas no primeiro toque
+let unlocked = false;
+function unlockMedia() {
+  if (unlocked) return; unlocked = true;
+  [song2, song3, song4, $('#rumpelVid')].forEach(m => {
+    if (!m.paused) return;
+    m.muted = true;
+    m.play().then(() => { if (!m._wanted) { m.pause(); m.currentTime = 0; } m.muted = MUTE_TEST; }).catch(() => { m.muted = MUTE_TEST; });
+  });
+}
 function fadeVol(a, to, sec) {
   if (a === song3 && to > 0 && typeof worship !== 'undefined' && worship) return; // durante a música da carta o Delacruz não volta
+  if (!CAN_VOL) { clearInterval(a._fade); if (to <= .2) a.pause(); else if (a.paused) a.play().catch(() => {}); return; }
   clearInterval(a._fade);
   const from = a.volume, t0 = performance.now();
   a._fade = setInterval(() => {
@@ -373,7 +389,7 @@ function fadeVol(a, to, sec) {
 // Delacruz só entra depois que o acapella do Daniel Caesar termina (nunca as duas juntas)
 let song3Started = false;
 function startSong3() {
-  if (song3Started) return; song3Started = true;
+  if (song3Started) return; song3Started = true; song3._wanted = true;
   song1.pause();
   song3.volume = 0;
   song3.play().then(() => fadeVol(song3, 1, 2.5)).catch(() => {});
@@ -383,7 +399,7 @@ song1.addEventListener('ended', startSong3);
 // então se o autoplay for bloqueado ele começa no primeiro toque em qualquer lugar
 function startSong1() { if (song1.paused && !song1.ended && !song3Started) song1.play().catch(() => {}); }
 song1.play().catch(() => {
-  const kick = () => { startSong1(); ['pointerdown', 'touchstart', 'keydown'].forEach(ev => removeEventListener(ev, kick)); };
+  const kick = () => { startSong1(); unlockMedia(); ['pointerdown', 'touchstart', 'keydown'].forEach(ev => removeEventListener(ev, kick)); };
   ['pointerdown', 'touchstart', 'keydown'].forEach(ev => addEventListener(ev, kick, { once: true, passive: true }));
 });
 let giftOpened = false;
@@ -391,13 +407,13 @@ $('#open').onclick = () => {
   setTimeout(() => { giftOpened = true; }, 1500); // espera a volta ao topo terminar
   window.scrollTo(0, 0); // sempre começa do topo ao abrir o presente
   startSong1(); // se já estiver tocando, não reinicia
-  song2.load(); song4.load(); if (!song3Started) song3.load(); // não corta o Delacruz se ele já estiver tocando
+  unlockMedia(); // libera Delacruz, Shrek e as músicas da carta para tocarem depois sozinhos
   gsap.to('#gate', { autoAlpha: 0, duration: 1.6, ease: 'power2.inOut', onComplete: () => $('.gate-vid').pause() });
   document.body.classList.remove('locked');
   lenis && lenis.start();
   lenis && lenis.scrollTo(0, { immediate: true, force: true });
   ScrollTrigger.refresh();
-  gsap.from('#cosmos .cosmo-line:first-child p', { opacity: 0, y: 30, filter: 'blur(10px)', duration: 2.4, delay: .6, ease: 'power3.out' });
+  gsap.from(document.querySelector('#cosmos .cosmo-line p'), { opacity: 0, y: 30, filter: 'blur(10px)', duration: 2.4, delay: .6, ease: 'power3.out' });
   // o número sobe de 0 até 13,8, desacelerando no final
   const bb = { v: 0 };
   gsap.to(bb, { v: 13.8, duration: 3.2, delay: .9, ease: 'power3.out', onUpdate: () => $('#bigbang').textContent = bb.v.toFixed(1).replace('.', ',') });
@@ -459,8 +475,12 @@ function drawSky(t) {
 }
 
 // textos do universo surgem e somem com desfoque
-gsap.utils.toArray('.cosmo-line:not(:first-child) p').forEach(p => {
-  gsap.to(p, { opacity: 0, y: -30, filter: 'blur(8px)', ease: 'none', scrollTrigger: { trigger: p, start: 'bottom 35%', end: 'bottom 5%', scrub: true } });
+// cada frase do universo fica parada no centro da tela por um tempo, para dar tempo de ler
+gsap.utils.toArray('.cosmo-line').forEach((line, i) => {
+  const pin = ScrollTrigger.create({ trigger: line, start: 'center center', end: i ? '+=70%' : '+=40%', pin: true });
+  // só esmaece depois que a pausa termina
+  gsap.to(line.querySelector('p'), { opacity: 0, y: -40, ease: 'none', immediateRender: false,
+    scrollTrigger: { start: () => pin.end, end: () => pin.end + innerHeight * .4, scrub: true, refreshPriority: -1 } }); // calcula depois da pausa
 });
 gsap.to(cosmos, { zoom: 1, drift: 1.2, ease: 'none', scrollTrigger: { trigger: '#cosmos', start: 'top top', end: 'bottom bottom', scrub: 1 } });
 
@@ -522,11 +542,14 @@ const DAY_WORDS = ['específico', 'único', 'marcado', 'especial', 'escolhido', 
 })(0);
 
 /* ---------- saídas: o texto sobe, desfoca e some ao rolar ---------- */
+// saída simples: só esmaece quando o texto já está saindo pelo topo (sem desfoque)
 function exitFx(sel) {
-  document.querySelectorAll(sel).forEach(el => gsap.to(el, { opacity: 0, y: -90, scale: .96, filter: 'blur(12px)', ease: 'none', immediateRender: false,
-    scrollTrigger: { trigger: el, start: 'top 14%', end: 'bottom -10%', scrub: true } }));
+  document.querySelectorAll(sel).forEach(el => gsap.to(el, { opacity: 0, y: -40, ease: 'none', immediateRender: false,
+    scrollTrigger: { trigger: el, start: 'top 8%', end: 'bottom top', scrub: true } }));
 }
-exitFx('.cosmo-line:first-child p, #nasceu .label, #typed, #carta > .label, #carta > h2, #assina > .label');
+exitFx('#nasceu .label, #typed, #carta > .label, #carta > h2, #assina > .label');
+// a frase "Nesse dia, o universo ganhou você" também fica parada um tempo
+ScrollTrigger.create({ trigger: '#nasceu', start: 'top top', end: '+=60%', pin: true });
 
 /* ---------- animações de texto: palavras e letras subindo ---------- */
 function split(el, byChar) {
@@ -551,11 +574,12 @@ function split(el, byChar) {
   return out;
 }
 // universo: palavras surgem do desfoque conforme a rolagem
-gsap.utils.toArray('.cosmo-line:not(:first-child) p').forEach(p => {
+gsap.utils.toArray('.cosmo-line p').slice(1).forEach(p => {
   const words = split(p), small = p.querySelector('small');
-  gsap.fromTo(words, { yPercent: 110, opacity: 0, filter: 'blur(8px)' }, { yPercent: 0, opacity: 1, filter: 'blur(0px)', stagger: .06, ease: 'none',
-    scrollTrigger: { trigger: p, start: 'top 85%', end: 'top 40%', scrub: true } });
-  if (small) gsap.fromTo(small, { opacity: 0, y: 20 }, { opacity: .85, y: 0, ease: 'none', scrollTrigger: { trigger: small, start: 'top 85%', end: 'top 55%', scrub: true } });
+  // as palavras sobem uma vez ao entrar e ficam nítidas (sem depender da rolagem)
+  gsap.fromTo(words, { yPercent: 110, opacity: 0 }, { yPercent: 0, opacity: 1, stagger: .06, duration: .9, ease: 'power3.out',
+    scrollTrigger: { trigger: p, start: 'top 80%', toggleActions: 'play none none reverse' } });
+  if (small) gsap.fromTo(small, { opacity: 0, y: 20 }, { opacity: .9, y: 0, duration: 1, delay: .5, ease: 'power3.out', scrollTrigger: { trigger: p, start: 'top 80%', toggleActions: 'play none none reverse' } });
 });
 // rótulos: letras se aproximam
 ['#assina > .label', '#carta > .label', '#final .label'].forEach(sel => gsap.from(sel, { opacity: 0, letterSpacing: '.9em', duration: 1.4, ease: 'power3.out', scrollTrigger: { trigger: sel, start: 'top 85%' } }));
@@ -783,7 +807,7 @@ function assinaPlay() {
   if (rumpelShown || !giftOpened) return; // a fala toca uma única vez, e só depois de abrir o presente
   const r = $('#assina .sign-wrap').getBoundingClientRect();
   if (r.bottom < 0 || r.top > innerHeight) return; // só quando a seção está mesmo na tela (não em saltos de rolagem)
-  rumpelShown = true; assina();
+  rumpelShown = true; $('#rumpelVid')._wanted = true; assina();
 }
 function assinaStop() { rv.pause(); gsap.to('#bubble', { rotation: 0, duration: .3, overwrite: true }); }
 ScrollTrigger.create({ trigger: '#assina .sign-wrap', start: 'top 70%', end: 'bottom 30%',
@@ -801,7 +825,7 @@ function allHearts() {
 }
 let worship = false;
 function toWorship() {
-  if (worship) return; worship = true;
+  if (worship) return; worship = true; song2._wanted = true;
   fadeVol(song3, 0, 2);
   setTimeout(() => worship && song3.pause(), 2100);
   song2.volume = 0;
@@ -817,7 +841,7 @@ function toDelacruz() {
 // trava: enquanto a música da carta estiver ativa, qualquer tentativa de tocar o Delacruz é cancelada
 song3.addEventListener('play', () => { if (worship) song3.pause(); });
 // quando "Na terra como no céu" termina, entra o Djavan; o Delacruz continua travado
-song2.addEventListener('ended', () => { djavan = true; song4.volume = 0; song4.play().then(() => fadeVol(song4, 1, 2.5)).catch(() => {}); });
+song2.addEventListener('ended', () => { djavan = true; song4._wanted = true; song4.volume = 0; song4.play().then(() => fadeVol(song4, 1, 2.5)).catch(() => {}); });
 $('#openLetter').onclick = () => {
   letterOpen = true;
   gsap.to('#stageDim', { opacity: .72, duration: 1.4 });
@@ -854,6 +878,8 @@ ScrollTrigger.create({ trigger: '#final', start: 'top 60%', once: true, onEnter:
     gsap.to(p, { y: innerHeight + 80, x: `+=${Math.random() * 160 - 80}`, rotation: Math.random() * 360, duration: 7 + Math.random() * 7, delay: Math.random() * 8, repeat: -1, ease: 'none' });
   }
 } });
+// os gatilhos foram criados fora da ordem da página: ordena e recalcula as posições
+ScrollTrigger.sort(); ScrollTrigger.refresh();
 </script>
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
 <script type="module" src="ceu3d.js?v=11"></script>
