@@ -34,6 +34,10 @@
     -webkit-mask:radial-gradient(ellipse 75% 70% at center, #000 35%, transparent 85%); mask:radial-gradient(ellipse 75% 70% at center, #000 35%, transparent 85%); }
   #gate::after { content:""; position:absolute; inset:0; z-index:1; pointer-events:none; background:radial-gradient(ellipse at center, rgba(20,26,80,.22), rgba(4,8,34,.82) 78%); }
   .gate-in { position:relative; z-index:2; }
+  /* vídeos são decorativos: esconde o botão de play/controles que o Safari mostra quando o autoplay é bloqueado */
+  video { pointer-events:none; }
+  video::-webkit-media-controls, video::-webkit-media-controls-panel, video::-webkit-media-controls-overlay-play-button,
+  video::-webkit-media-controls-start-playback-button { display:none !important; -webkit-appearance:none; opacity:0 !important; }
   .pill { border:1px solid currentColor; background:transparent; color:#fff; padding:1rem 2.4rem; border-radius:999px; font-weight:700; font-size:.92rem; letter-spacing:.1em; cursor:pointer; transition:background .3s, color .3s; }
   .pill:hover { background:#fff; color:var(--night); }
   .pill.red { color:var(--red); }
@@ -220,7 +224,7 @@
 </div>
 
 <div id="gate">
-  <video class="gate-vid" src="futuro/abertura.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+  <video class="gate-vid" src="futuro/abertura.mp4" poster="futuro/abertura-capa.jpg" autoplay muted loop playsinline webkit-playsinline disablepictureinpicture disableremoteplayback controlslist="nodownload nofullscreen noremoteplayback" preload="auto" aria-hidden="true"></video>
   <div class="gate-in">
     <h1>Você não esperava menos de um <em>desenvolvedor</em>, né?</h1>
     <img class="emo-inline gate-emo" src="emojis/emoji-por-favor.webp" alt="" aria-hidden="true">
@@ -301,7 +305,7 @@
     <span class="label">No cartório</span>
     <div class="sign-wrap">
       <img class="sign-photo" src="futuro/assinando.jpg" alt="Eu assinando no cartório">
-      <div class="rumpel"><video id="rumpelVid" src="futuro/assina.mp4" playsinline preload="auto"></video></div>
+      <div class="rumpel"><video id="rumpelVid" src="futuro/assina.mp4" poster="futuro/assina-capa.jpg" muted playsinline webkit-playsinline disablepictureinpicture disableremoteplayback controlslist="nodownload nofullscreen noremoteplayback" preload="auto"></video></div>
       <div class="bubble" id="bubble">Assina, Shrek!</div>
     </div>
     <p class="sign-cap">E eu assinei kkkk ♥<img class="emo-inline" src="emojis/emoji-chorando-de-rir.webp" alt="" aria-hidden="true" loading="lazy"></p>
@@ -329,13 +333,13 @@
       <p>O tempo passou muito rápido, né? Esses dias falávamos que íamos casar brincando, e pra mim nunca foi uma brincadeira. Eu sempre quis ter alguém como você do lado: uma mulher linda, carismática e cuidadosa, talentosa e dedicada em tudo que faz. Nos meus sonhos, quando criança, era isso que eu sempre pedia a Deus: alguém firmeza com quem eu pudesse dividir a vida e ter certeza de que era o amor da minha vida.</p>
       <p>Esse texto não foi ensaiado, nenhuma linha dele foi planejada; é tudo que há no meu coração. Incrível saber que, em meio a um universo tão vasto, eu consegui encontrar minha metade, a mulher dos meus sonhos. O tempo passou rápido, mas o sentimento e o amor do início permanecem. Só devemos saber lapidá-lo ainda mais, pra fortalecer ainda mais.</p>
       <p>Há exatamente 1 ano você estava aqui gravando esse vídeo, deslumbrante como sempre, linda e gostosa, e foi um dia muito gostoso ao seu lado.</p>
-      <figure class="letter-media"><video src="futuro/espelho.mp4" muted loop playsinline preload="metadata"></video><figcaption>há exatamente 1 ano</figcaption></figure>
+      <figure class="letter-media"><video src="futuro/espelho.mp4" poster="futuro/espelho-capa.jpg" muted loop playsinline webkit-playsinline disablepictureinpicture disableremoteplayback controlslist="nodownload nofullscreen noremoteplayback" preload="metadata"></video><figcaption>há exatamente 1 ano</figcaption></figure>
       <p>E espero que a data de hoje seja ainda mais, com pessoas importantes pra nós. Sei que a pessoa que você mais queria ver no seu aniversário é sua vó, até porque ela é uma das pessoas mais importantes, se não a mais importante. Mas, mesmo que ainda não a vejamos hoje, 08/11, ainda assim espero que seu dia seja cheio de alegria, cheio de amor.</p>
       <p>É impressionante como o tempo passou rápido, né? Um dia éramos namorados, no outro casamos. Estamos realizando nossos sonhos. Somos felizes e em breve formaremos uma família linda. Nossa casa, nossa vida é rodeada de bênçãos do Senhor; estamos nos alinhando para aquilo que já é nosso.</p>
       <p>Iremos juntos conhecer o mundo, novos países, novas cidades. Viveremos tudo aquilo que hoje é sonho. Tenho certeza de que o universo e Deus irão alinhar a realidade ao nosso favor, e é importante que nós estejamos juntos e cuidando um do outro até lá.</p>
       <p>Só tenho a agradecer e nada a reclamar, por ter você do lado, pelos momentos mais simples ao seu lado. E juramos que iríamos passar juntos, na alegria e na tristeza, na saúde e na doença, na pobreza e na riqueza, e assim permanecerá ❤️</p>
       <p>Esses dias você tava pegando nossa filha na caixa pra levar pra casa…</p>
-      <figure class="letter-media"><video src="futuro/mel.mp4" muted loop playsinline preload="metadata"></video><figcaption>a Mel chegando</figcaption></figure>
+      <figure class="letter-media"><video src="futuro/mel.mp4" poster="futuro/mel-capa.jpg" muted loop playsinline webkit-playsinline disablepictureinpicture disableremoteplayback controlslist="nodownload nofullscreen noremoteplayback" preload="metadata"></video><figcaption>a Mel chegando</figcaption></figure>
       <p>…hoje estamos em outra cidade, com uma motinha zero. Mesmo que antes ainda fosse só um sonho, comprar uma motinha, hoje realizamos. Você vê que as coisas vão se encaixando aos poucos, amor?</p>
       <figure class="letter-media print"><img src="futuro/moto.jpg" alt="Nossa conversa sobre comprar uma moto"><figcaption>quando ainda era só um sonho</figcaption><img class="emo" src="emojis/emoji-moto.webp" alt="" aria-hidden="true" loading="lazy" style="right:-12%; bottom:10%"></figure>
       <p>E estamos vivendo bem, sendo felizes. A verdade é que a vida só tem graça quando damos importância ao simples, damos importância pra aquilo que o dinheiro do mundo inteiro não pode comprar. Os momentos únicos que riqueza nenhuma pode comprar.</p>
@@ -488,7 +492,13 @@ function next() {
 // o acapella tenta tocar já na entrada; se o navegador bloquear, começa no primeiro toque.
 // Todo toque também "acorda" o áudio se o celular pausou sozinho (ligação, troca de app).
 playTrack('intro');
+// vídeo de fundo da entrada: insiste no play (alguns iPhones só liberam depois de um toque; no Modo de Pouca Energia fica a capa)
+const gateVid = $('.gate-vid');
+const gatePlay = () => { if (gateVid.paused && getComputedStyle($('#gate')).visibility !== 'hidden') { gateVid.muted = true; gateVid.play().catch(() => {}); } };
+gatePlay(); gateVid.addEventListener('canplay', gatePlay);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) gatePlay(); });
 const kick = () => {
+  gatePlay();
   mixInit();
   if (actx && actx.state !== 'running') actx.resume().catch(() => {});
   if (active && active.paused && !active.ended && !shrekOn) active.play().catch(() => {});
