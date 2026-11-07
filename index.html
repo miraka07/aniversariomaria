@@ -229,14 +229,9 @@
   </div>
 </div>
 
-<audio id="song1" src="musica.mp3" preload="auto"></audio>
-<!-- Segunda música: salve como musica2.mp3 nesta pasta; entra quando a carta abre -->
-<!-- Música da carta: "Na terra como no céu" a partir de 3:40 -->
-<audio id="song2" src="musica_carta.mp3" preload="none"></audio>
-<!-- Terceira música: entra logo depois do acapella e fica tocando durante a rolagem -->
-<audio id="song3" src="musica3.mp3" preload="auto" loop></audio>
-<!-- Quarta música: "Um Amor Puro" (Djavan) a partir de 1:33, entra quando "Na terra como no céu" termina -->
-<audio id="song4" src="musica4.mp3" preload="none" loop></audio>
+<!-- Trilha: só 2 players de música ("decks", como um DJ). Nunca existem mais de 2 músicas carregadas. -->
+<audio id="deckA" preload="auto"></audio>
+<audio id="deckB" preload="none"></audio>
 <!-- fala do Shrek separada: no iPhone ela toca pelo player único (o vídeo fica mudo) -->
 <audio id="shrekAudio" src="futuro/assina_audio.mp3" preload="none"></audio>
 
@@ -393,72 +388,113 @@ if (lenis) {
 }
 
 /* ---------- Portão ---------- */
-const song1 = $('#song1'), song2 = $('#song2'), song3 = $('#song3'), song4 = $('#song4'), shrekAudio = $('#shrekAudio');
+const deckA = $('#deckA'), deckB = $('#deckB'), shrekAudio = $('#shrekAudio');
 // ?mute na URL silencia tudo (só para testes)
 const MUTE_TEST = /[?&]mute/.test(location.search);
-const TRACKS = [song1, song2, song3, song4, shrekAudio];
-let worship = false, djavan = false; // estado da trilha da carta (declarado antes de qualquer evento de áudio)
 if (MUTE_TEST) document.querySelectorAll('audio, video').forEach(m => { m.muted = true; });
-$('#rumpelVid').muted = true; // a fala do Shrek sai pelo áudio separado (mixado); o vídeo é só imagem
+$('#rumpelVid').muted = true; // a fala do Shrek sai pelo áudio separado; o vídeo é só imagem
 
-/* ---------- mixer: todas as músicas passam por volumes do Web Audio ----------
-   Funciona igual no PC e no iPhone (que não deixa mudar o volume do <audio>):
-   - cada música tem seu próprio volume, então dá para fazer crossfade (uma abaixa enquanto a outra entra);
-   - quem não está na vez fica em volume 0: nada vaza, mesmo que o celular dê play sozinho. */
+/* ---------- trilha: UMA música por vez ----------
+   Por que assim: antes cada música tinha seu player e todas eram "acordadas" no primeiro toque.
+   Quando o controle de volume falhava (iPhone ignora o volume do <audio>; o Web Audio pode estar suspenso),
+   elas vazavam juntas. Agora existem só 2 decks: a música nova só entra quando a anterior já está baixa,
+   e se não houver controle de volume confiável a troca é seca (para uma, toca a outra). */
+const TRACK = { intro: ['musica.mp3', false], delacruz: ['musica3.mp3', true], carta: ['musica_carta.mp3', false], djavan: ['musica4.mp3', true] };
+let current = null, active = null, worship = false, djavan = false, shrekOn = false;
+let actx = null; // contexto de áudio (mixer + efeitos); declarado aqui porque a trilha começa antes da seção de efeitos
+const pos = {}; // onde cada música parou (para retomar)
+// 0,1 s de silêncio (WAV gerado na hora), usado só para liberar os players no primeiro toque
+const SILENT = (() => {
+  const n = 800, b = new ArrayBuffer(44 + n * 2), v = new DataView(b);
+  const s = (o, str) => [...str].forEach((ch, i) => v.setUint8(o + i, ch.charCodeAt(0)));
+  s(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); s(8, 'WAVE'); s(12, 'fmt '); v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 16000, true);
+  v.setUint16(32, 2, true); v.setUint16(34, 16, true); s(36, 'data'); v.setUint32(40, n * 2, true);
+  return URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
+})();
 const gains = new Map();
 let mixReady = false;
+const canFade = () => gains.size > 0 && actx && actx.state === 'running';
+function vol(el, v, sec) {
+  const g = gains.get(el); if (!g) return;
+  const now = actx.currentTime; g.gain.cancelScheduledValues(now); g.gain.setValueAtTime(g.gain.value, now);
+  g.gain.linearRampToValueAtTime(v, now + (sec || .02));
+}
 function mixInit() {
   if (mixReady) return; mixReady = true;
   try {
     const c = ac();
-    TRACKS.forEach(el => {
-      const g = c.createGain(); g.gain.value = el === song1 ? 1 : 0;
-      c.createMediaElementSource(el).connect(g).connect(c.destination);
+    [deckA, deckB, shrekAudio].forEach(el => {
+      const g = c.createGain(); g.gain.value = el === active ? 1 : 0;
       gains.set(el, g);
+      c.createMediaElementSource(el).connect(g).connect(c.destination);
     });
-  } catch (e) { gains.clear(); }
-  // libera cada música neste toque (celular só toca depois quem foi liberado por um toque), com volume 0
-  TRACKS.forEach(el => {
-    if (el === song1 || !el.paused) return;
-    if (!gains.size) el.muted = true;
-    const done = () => { if (!el._wanted) { el.pause(); el.currentTime = 0; } el.muted = MUTE_TEST; el._primed = true; };
+  } catch (e) {
+    gains.forEach(g => { g.gain.value = 1; }); // falhou no meio: nada fica preso no volume 0
+    gains.clear(); // e o site passa a usar só troca seca (nunca duas juntas)
+  }
+  // libera o deck livre e a fala do Shrek neste toque (o celular só deixa tocar depois quem já tocou num toque), mudos
+  // a liberação toca um arquivo de SILÊNCIO absoluto: mesmo que o aparelho ignore o "mudo", não há som para vazar
+  [deckA, deckB, shrekAudio].forEach(el => {
+    if (el === active || !el.paused) return;
+    const real = el.getAttribute('src');
+    el.src = SILENT;
+    const done = () => {
+      if (el === active || (el === shrekAudio && shrekOn)) return; // virou a vez dele enquanto liberava
+      el.pause(); if (real) el.src = real;
+    };
     el.play().then(done, done);
   });
 }
-function level(el, v) { const g = gains.get(el); if (g) { g.gain.cancelScheduledValues(actx.currentTime); g.gain.setValueAtTime(v, actx.currentTime); } else el.volume = v; }
-function fade(el, to, sec, then) {
-  const g = gains.get(el);
-  if (g) { const t = actx.currentTime; g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value, t); g.gain.linearRampToValueAtTime(to, t + sec); }
-  else {
-    clearInterval(el._fade); const from = el.volume, t0 = performance.now();
-    el._fade = setInterval(() => { const k = Math.min(1, (performance.now() - t0) / (sec * 1000)); el.volume = from + (to - from) * k; if (k === 1) clearInterval(el._fade); }, 40);
+function seekWhenReady(el, s) {
+  if (!s) return;
+  if (el.readyState >= 1) { try { el.currentTime = s; } catch (e) {} }
+  else el.addEventListener('loadedmetadata', () => { try { el.currentTime = s; } catch (e) {} }, { once: true });
+}
+function playTrack(name) {
+  if (current === name) return;
+  const [src, loop] = TRACK[name];
+  const from = active, to = from === deckA ? deckB : deckA;
+  if (from && current) pos[current] = from.currentTime;
+  current = name; active = to;
+  clearTimeout(to._stop); clearTimeout(to._start);
+  to.loop = loop;
+  if (to.getAttribute('src') !== src) to.src = src;
+  seekWhenReady(to, pos[name] || 0);
+  if (actx && actx.state !== 'running') actx.resume().catch(() => {});
+  if (from && !from.paused && canFade()) {
+    // sai a anterior (1,6 s) e a nova só entra quando ela já está baixa: nunca duas audíveis juntas
+    vol(from, 0, 1.6);
+    from._stop = setTimeout(() => { if (from !== active) from.pause(); }, 1700);
+    vol(to, 0);
+    to._start = setTimeout(() => { if (active === to) { to.play().catch(() => {}); vol(to, 1, 1.6); } }, 1550);
+  } else {
+    // sem controle de volume confiável: troca seca
+    if (from) from.pause();
+    vol(to, 1); to.play().catch(() => {});
   }
-  clearTimeout(el._then); if (then) el._then = setTimeout(then, sec * 1000 + 60);
 }
-// entra com fade-in a partir do volume 0
-function fadeIn(el, sec) { el._wanted = true; clearTimeout(el._then); level(el, 0); el.play().catch(() => {}); fade(el, 1, sec); }
-// sai com fade-out e pausa no fim
-function fadeOut(el, sec) { el._wanted = false; fade(el, 0, sec, () => { if (!el._wanted) el.pause(); }); }
-// trava: depois de liberada, nenhuma música toca fora da vez
-TRACKS.forEach(el => el.addEventListener('play', () => { if (el !== song1 && el._primed && !el._wanted) el.pause(); }));
-
-// acapella → Delacruz em crossfade: o Delacruz entra 3 s antes do fim enquanto o acapella abaixa
-let song3Started = false;
-function startSong3() {
-  if (song3Started) return; song3Started = true;
-  if (worship || djavan) { fadeOut(song1, 3); return; } // já está na carta: não volta para o Delacruz
-  fadeIn(song3, 3); fadeOut(song1, 3);
+function next() {
+  if (current === 'intro') playTrack(djavan ? 'djavan' : worship ? 'carta' : 'delacruz');
+  else if (current === 'carta') { djavan = true; playTrack('djavan'); }
 }
-song1.addEventListener('timeupdate', () => { if (song1.duration && song1.duration - song1.currentTime < 3) startSong3(); });
-song1.addEventListener('ended', startSong3);
-// o acapella tenta tocar já na entrada; se o navegador bloquear, começa no primeiro toque (iPhone: fim do toque)
-function startSong1() { if (song1.paused && !song1.ended && !song3Started) song1.play().catch(() => {}); }
-song1.play().catch(() => {
-  const kick = () => { mixInit(); startSong1(); if (!song1.paused) ['touchend', 'click', 'keydown'].forEach(ev => removeEventListener(ev, kick)); };
-  ['touchend', 'click', 'keydown'].forEach(ev => addEventListener(ev, kick, { passive: true }));
+[deckA, deckB].forEach(d => {
+  d.addEventListener('timeupdate', () => {
+    if (d !== active || !d.duration || d.loop) return;
+    if (d.duration - d.currentTime < 1.8) next(); // a próxima começa a entrar perto do fim
+  });
+  d.addEventListener('ended', () => { if (d === active) next(); });
 });
+// o acapella tenta tocar já na entrada; se o navegador bloquear, começa no primeiro toque.
+// Todo toque também "acorda" o áudio se o celular pausou sozinho (ligação, troca de app).
+playTrack('intro');
+const kick = () => {
+  mixInit();
+  if (actx && actx.state !== 'running') actx.resume().catch(() => {});
+  if (active && active.paused && !active.ended && !shrekOn) active.play().catch(() => {});
+};
+['touchend', 'click', 'keydown'].forEach(ev => addEventListener(ev, kick, { passive: true }));
 /* ---------- efeitos sonoros gerados por código (Web Audio, sem arquivos) ---------- */
-let actx = null;
 function ac() {
   if (!actx) {
     actx = new (window.AudioContext || window.webkitAudioContext)();
@@ -536,8 +572,7 @@ $('#open').onclick = () => {
   dropBass(); // efeito sonoro de entrada
   setTimeout(() => { giftOpened = true; }, 1500); // espera a volta ao topo terminar
   window.scrollTo(0, 0); // sempre começa do topo ao abrir o presente
-  mixInit(); // liga o mixer e libera as músicas neste toque
-  startSong1(); // se já estiver tocando, não reinicia
+  kick(); // liga o mixer, libera os decks e garante o acapella tocando (sem reiniciar)
   gsap.to('#gate', { autoAlpha: 0, duration: 1.6, ease: 'power2.inOut', onComplete: () => $('.gate-vid').pause() });
   document.body.classList.remove('locked');
   lenis && lenis.start();
@@ -951,10 +986,17 @@ gsap.from('.fut-title .label, .fut-title h2', { opacity: 0, y: 40, stagger: .15,
 
 /* ---------- 4c. Cartório: o personagem cobra a assinatura ---------- */
 const rv = $('#rumpelVid');
-// fala do Shrek: o Delacruz abaixa (sem parar) enquanto ele fala e volta suave depois
-function shrekSay() { if (!worship) fade(song3, .15, .5); fadeIn(shrekAudio, .05); }
-function shrekDone() { if (!worship && song3._wanted) fade(song3, 1, 1.5); }
-shrekAudio.addEventListener('ended', () => { shrekAudio._wanted = false; shrekDone(); });
+// fala do Shrek: a música abaixa enquanto ele fala (ou pausa, se não houver controle de volume) e volta depois
+function shrekSay() {
+  shrekOn = true; shrekAudio.currentTime = 0;
+  if (canFade()) { vol(active, .1, .15); vol(shrekAudio, 1); } else if (active) active.pause();
+  setTimeout(() => { if (shrekOn) shrekAudio.play().catch(() => {}); }, 200); // a música abaixa primeiro, depois ele fala
+}
+function shrekDone() {
+  if (!shrekOn) return; shrekOn = false;
+  if (canFade()) vol(active, 1, 1.2); else if (active && active.paused) active.play().catch(() => {});
+}
+shrekAudio.addEventListener('ended', shrekDone);
 function assina() {
   rv.currentTime = 0;
   gsap.timeline()
@@ -976,7 +1018,7 @@ function assinaPlay() {
   if (r.bottom < 0 || r.top > innerHeight) return; // só quando a seção está mesmo na tela (não em saltos de rolagem)
   rumpelShown = true; $('#rumpelVid')._wanted = true; assina();
 }
-function assinaStop() { rv.pause(); if (shrekAudio._wanted) { fadeOut(shrekAudio, .3); shrekDone(); } gsap.to('#bubble', { rotation: 0, duration: .3, overwrite: true }); }
+function assinaStop() { rv.pause(); if (shrekOn) { shrekAudio.pause(); shrekDone(); } gsap.to('#bubble', { rotation: 0, duration: .3, overwrite: true }); }
 ScrollTrigger.create({ trigger: '#assina .sign-wrap', start: 'top 70%', end: 'bottom 30%',
   onEnter: assinaPlay, onEnterBack: assinaPlay, onLeave: assinaStop, onLeaveBack: assinaStop });
 
@@ -990,14 +1032,9 @@ function allHearts() {
   gsap.fromTo(t, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: .8, ease: 'power3.out' });
   gsap.to(t, { opacity: 0, delay: 3.5, duration: .8, onComplete: () => t.remove() });
 }
-// "Deus faz milagres": o Delacruz sai enquanto "Na terra como no céu" entra (crossfade)
-function toWorship() { if (worship || djavan) return; worship = true; fadeOut(song3, 3); fadeIn(song2, 3); }
-// rolou de volta para cima: inverte
-function toDelacruz() { if (!worship || djavan) return; worship = false; fadeOut(song2, 2.5); fadeIn(song3, 2.5); }
-// fim de "Na terra como no céu": o Djavan entra 3 s antes, em crossfade; o Delacruz não volta mais
-function toDjavan() { if (djavan) return; djavan = true; fadeOut(song2, 3); fadeIn(song4, 3); }
-song2.addEventListener('timeupdate', () => { if (worship && song2.duration && song2.duration - song2.currentTime < 3) toDjavan(); });
-song2.addEventListener('ended', toDjavan);
+// "Deus faz milagres": sai o Delacruz e entra "Na terra como no céu"; voltando para cima, inverte (até o Djavan entrar)
+function toWorship() { if (worship || djavan) return; worship = true; if (current !== 'intro') playTrack('carta'); }
+function toDelacruz() { if (!worship || djavan) return; worship = false; if (current === 'carta') playTrack('delacruz'); }
 $('#openLetter').onclick = () => {
   paperOpen(); // som de envelope de papel abrindo
   letterOpen = true;
