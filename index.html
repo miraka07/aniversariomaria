@@ -219,7 +219,7 @@
 </div>
 
 <div id="gate">
-  <video class="gate-vid" src="futuro/abertura.mp4" poster="futuro/abertura-capa.webp" autoplay muted loop playsinline webkit-playsinline disablepictureinpicture disableremoteplayback controlslist="nodownload nofullscreen noremoteplayback" preload="auto" aria-hidden="true"></video>
+  <img class="gate-vid" src="futuro/abertura.webp" alt="" aria-hidden="true" fetchpriority="high"> <!-- imagem animada: roda sempre, sem botão de play (vídeo era bloqueado no Modo de Pouca Energia do iPhone) -->
   <div class="gate-in">
     <h1>Você não esperava menos de um <em>desenvolvedor</em>, né?</h1>
     <img class="emo-inline gate-emo" src="emojis/emoji-por-favor.webp" alt="" aria-hidden="true">
@@ -486,13 +486,7 @@ function next() {
 // o acapella tenta tocar já na entrada; se o navegador bloquear, começa no primeiro toque.
 // Todo toque também "acorda" o áudio se o celular pausou sozinho (ligação, troca de app).
 playTrack('intro');
-// vídeo de fundo da entrada: insiste no play (alguns iPhones só liberam depois de um toque; no Modo de Pouca Energia fica a capa)
-const gateVid = $('.gate-vid');
-const gatePlay = () => { if (gateVid.paused && getComputedStyle($('#gate')).visibility !== 'hidden') { gateVid.muted = true; gateVid.play().catch(() => {}); } };
-gatePlay(); gateVid.addEventListener('canplay', gatePlay);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) gatePlay(); });
 const kick = () => {
-  gatePlay();
   mixInit();
   if (actx && actx.state !== 'running') actx.resume().catch(() => {});
   if (active && active.paused && !active.ended && !shrekOn) active.play().catch(() => {});
@@ -585,7 +579,7 @@ $('#open').onclick = () => {
   setTimeout(() => { giftOpened = true; }, 1500); // espera a volta ao topo terminar
   window.scrollTo(0, 0); // sempre começa do topo ao abrir o presente
   kick(); // liga o mixer, libera os decks e garante o acapella tocando (sem reiniciar)
-  gsap.to('#gate', { autoAlpha: 0, duration: 1.6, ease: 'power2.inOut', onComplete: () => $('.gate-vid').pause() });
+  gsap.to('#gate', { autoAlpha: 0, duration: 1.6, ease: 'power2.inOut', onComplete: () => { $('.gate-vid').style.display = 'none'; } }); // para de animar o fundo depois de abrir
   document.body.classList.remove('locked');
   lenis && lenis.start();
   lenis && lenis.scrollTo(0, { immediate: true, force: true });
