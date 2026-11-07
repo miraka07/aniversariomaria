@@ -29,9 +29,7 @@
   #gate h1 { font-family:"Cormorant Garamond", serif; font-weight:400; font-size:clamp(2.6rem, 8.5vw, 5.2rem); line-height:1.08; max-width:14ch; margin:0 auto 2.8rem; }
   #gate h1 em { color:#ff8fa3; }
   /* vídeo de fundo da entrada: sem cor, misturado ao azul e esmaecendo nas bordas */
-  .gate-vid { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; opacity:.62; mix-blend-mode:screen;
-    filter:grayscale(1) contrast(1.15) brightness(.85);
-    -webkit-mask:radial-gradient(ellipse 75% 70% at center, #000 35%, transparent 85%); mask:radial-gradient(ellipse 75% 70% at center, #000 35%, transparent 85%); }
+  .gate-vid { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; opacity:.5; } /* P&B já vem no arquivo; sem filtro/mistura/máscara sobre vídeo (travam no iPhone) */
   #gate::after { content:""; position:absolute; inset:0; z-index:1; pointer-events:none; background:radial-gradient(ellipse at center, rgba(20,26,80,.22), rgba(4,8,34,.82) 78%); }
   .gate-in { position:relative; z-index:2; }
   /* vídeos são decorativos: esconde o botão de play/controles que o Safari mostra quando o autoplay é bloqueado */
@@ -99,7 +97,7 @@
   }
 
   /* emojis 3D: figurinhas nas bordas e entre os trechos */
-  .emo, .emo-inline, .note-emo { pointer-events:none; filter:drop-shadow(0 10px 16px rgba(0,0,0,.35)); }
+  .emo, .emo-inline, .note-emo { pointer-events:none; }
   .emo { position:absolute; z-index:3; width:clamp(72px, 15vw, 128px); height:auto; }
   .emo-inline { display:block; width:clamp(78px, 20vw, 116px); height:auto; margin:.4rem auto 1.2rem; }
   .note-emo { display:block; width:clamp(72px, 9vw, 104px); height:auto; margin:0 0 .6rem -.4rem; }
@@ -110,12 +108,8 @@
   #assina { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:14vh 1rem 8vh; background:var(--blush); text-align:center; }
   .sign-wrap { position:relative; height:min(80vh, 880px); aspect-ratio:3/4; max-width:94vw; }
   .sign-photo { width:100%; height:100%; object-fit:cover; border-radius:18px; box-shadow:0 30px 60px -25px rgba(43,26,29,.45); }
-  .rumpel { position:absolute; left:62%; top:-7%; width:40%; aspect-ratio:1; border-radius:50%; overflow:hidden;
-    -webkit-mask:radial-gradient(circle, #000 56%, transparent 72%); mask:radial-gradient(circle, #000 56%, transparent 72%); }
+  .rumpel { position:absolute; left:62%; top:-7%; width:40%; aspect-ratio:1; border-radius:50%; overflow:hidden; box-shadow:0 0 0 4px rgba(255,255,255,.9), 0 14px 30px rgba(0,0,0,.35); }
   .rumpel video { width:100%; height:100%; object-fit:cover; display:block; }
-  /* anel desfocado nas bordas: só o rosto fica nítido */
-  .rumpel::after { content:""; position:absolute; inset:0; backdrop-filter:blur(9px); -webkit-backdrop-filter:blur(9px);
-    -webkit-mask:radial-gradient(circle, transparent 40%, #000 62%); mask:radial-gradient(circle, transparent 40%, #000 62%); }
   .bubble { position:absolute; left:3%; top:6%; max-width:40%; padding:.8rem 1.1rem; background:#fff; color:var(--ink); border:3px solid var(--ink); border-radius:22px;
     font:700 clamp(1.1rem, 3.4vw, 1.7rem)/1.15 Roboto, sans-serif; box-shadow:4px 5px 0 var(--ink); transform-origin:85% 100%; }
   .bubble::after { content:""; position:absolute; right:-16px; bottom:10px; border:12px solid transparent; border-left:18px solid var(--ink); }
@@ -154,7 +148,7 @@
   #photoUI .quiz, #photoUI .hidden-heart { pointer-events:auto; }
   #nos { height:100vh; height:100svh; position:relative; cursor:pointer; }
   .slot { position:absolute; inset:0; }
-  .slot .bg { position:absolute; inset:-8%; width:116%; height:116%; object-fit:cover; filter:blur(24px) saturate(1.2) brightness(.75); will-change:transform; }
+  .slot .bg { position:absolute; inset:-8%; width:116%; height:116%; object-fit:cover; } /* miniatura já desfocada: barato para o celular */
   .slot .fg { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
   @media (max-aspect-ratio: 4/5) { .slot .fg { object-fit:cover; } }
   .vignette { position:absolute; inset:0; z-index:2; pointer-events:none; background:radial-gradient(ellipse at center, transparent 55%, rgba(26,6,10,.55)); }
@@ -169,7 +163,7 @@
   .fly { position:fixed; z-index:200; pointer-events:none; color:#ff4d6d; font-size:40px; }
 
   /* Quiz */
-  .quiz { position:absolute; z-index:8; left:50%; bottom:5.5rem; transform:translateX(-50%); width:min(92vw, 420px); padding:1.6rem 1.4rem 1.2rem; border-radius:22px; background:rgba(255,255,255,.97); backdrop-filter:blur(14px); border:1px solid var(--rose); box-shadow:0 30px 80px -20px rgba(0,0,0,.5); text-align:center; visibility:hidden; }
+  .quiz { position:absolute; z-index:8; left:50%; bottom:5.5rem; transform:translateX(-50%); width:min(92vw, 420px); padding:1.6rem 1.4rem 1.2rem; border-radius:22px; background:rgba(255,255,255,.97); border:1px solid var(--rose); box-shadow:0 30px 80px -20px rgba(0,0,0,.5); text-align:center; visibility:hidden; }
   .quiz h3 { font-family:"Cormorant Garamond", serif; font-weight:600; font-size:clamp(1.7rem, 5vw, 2.2rem); line-height:1.2; margin-bottom:1.1rem; }
   .quiz .opt { display:block; width:100%; margin:.45rem 0; padding:.8rem 1rem; background:#fff; border:1.5px solid var(--rose); border-radius:14px; font-weight:700; font-size:1.08rem; color:var(--ink); cursor:pointer; transition:border-color .25s; }
   .quiz .opt:hover { border-color:var(--red); }
@@ -213,8 +207,8 @@
 <canvas id="sky" aria-hidden="true"></canvas>
 <div id="dawn"></div>
 <div id="stage" aria-hidden="true">
-  <div class="slot" id="slotA"><img class="bg" src="fotos/01.jpg" alt=""><img class="fg" src="fotos/01.jpg" alt="Nós dois"></div>
-  <div class="slot" id="slotB"><img class="bg" src="fotos/02.jpg" alt=""><img class="fg" src="fotos/02.jpg" alt="Nós dois"></div>
+  <div class="slot" id="slotA"><img class="bg" src="fotos/blur/01.jpg" alt=""><img class="fg" src="fotos/01.jpg" alt="Nós dois"></div>
+  <div class="slot" id="slotB"><img class="bg" src="fotos/blur/02.jpg" alt=""><img class="fg" src="fotos/02.jpg" alt="Nós dois"></div>
   <div class="vignette"></div>
   <div id="stageDim"></div>
 </div>
@@ -814,7 +808,7 @@ const EFFECTS = [
 function load(slot, i) {
   return new Promise(res => {
     const [bg, fg] = slot.querySelectorAll('img');
-    bg.src = fg.src = PHOTOS[i];
+    fg.src = PHOTOS[i]; bg.src = PHOTOS[i].replace('fotos/', 'fotos/blur/');
     fg.decode ? fg.decode().then(res, res) : (fg.onload = res);
   });
 }
@@ -1052,12 +1046,12 @@ $('#openLetter').onclick = () => {
   $('#openLetter').style.display = 'none'; $('#lockMsg').style.display = 'none';
   // a carta e a troca de música são montadas já no clique; o envelope é só a animação por cima
   $('#letter').style.display = 'block';
-  gsap.set('#letter > *', { opacity: 0, y: 30, filter: 'blur(8px)' });
+  gsap.set('#letter > *', { opacity: 0, y: 30 });
   const relayout = () => { lenis && lenis.resize(); ScrollTrigger.refresh(); };
   relayout();
   // cada trecho da carta aparece quando chega na tela
   ScrollTrigger.batch('#letter > *', { start: 'top 88%', once: true,
-    onEnter: els => gsap.to(els, { opacity: 1, y: 0, filter: 'blur(0px)', stagger: .2, duration: 1.2, ease: 'power3.out' }) });
+    onEnter: els => gsap.to(els, { opacity: 1, y: 0, stagger: .2, duration: 1.2, ease: 'power3.out' }) });
   // troca de música pela rolagem: em "Deus faz milagres" o Delacruz sai e entra "Na terra como no céu" (3:40)
   ScrollTrigger.create({ trigger: '#milagre', start: 'top 75%', onEnter: toWorship, onEnterBack: toWorship, onLeaveBack: toDelacruz });
   // vídeos da carta só rodam quando estão na tela
@@ -1093,6 +1087,6 @@ gsap.to('.gate-emo', { y: -6, duration: 1.4, yoyo: true, repeat: -1, ease: 'sine
 ScrollTrigger.sort(); ScrollTrigger.refresh();
 </script>
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
-<script type="module" src="ceu3d.js?v=20"></script>
+<script type="module" src="ceu3d.js?v=21"></script>
 </body>
 </html>

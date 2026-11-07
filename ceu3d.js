@@ -162,7 +162,7 @@ new IntersectionObserver(es => visible = es[0].isIntersecting).observe(canvas);
 function resize() {
   const w = canvas.clientWidth, h = canvas.clientHeight;
   if (canvas.width !== Math.floor(w * renderer.getPixelRatio()) || canvas.height !== Math.floor(h * renderer.getPixelRatio())) {
-    renderer.setSize(w, h, false); composer.setSize(w, h); bloom.setSize(w, h);
+    renderer.setSize(w, h, false); if (!LOW) { composer.setSize(w, h); bloom.setSize(w, h); }
     camera.aspect = w / h; camera.updateProjectionMatrix();
   }
 }
@@ -246,6 +246,6 @@ function frame() {
   marker.getWorldPosition(projV).project(camera);
   placeEl.style.opacity = seg(p, .88, .93) * (1 - seg(p, .955, .98));
   placeEl.style.transform = 'translate(' + ((projV.x + 1) / 2 * canvas.clientWidth) + 'px,' + ((1 - projV.y) / 2 * canvas.clientHeight) + 'px)';
-  composer.render();
+  if (LOW) renderer.render(scene, camera); else composer.render(); // celular: sem bloom (as telas extras do bloom estouravam a memória do iPhone)
 }
 frame();
