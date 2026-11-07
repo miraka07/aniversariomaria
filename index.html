@@ -502,7 +502,7 @@ const kick = () => {
 let loaded3D = false;
 function load3D() {
   if (loaded3D) return; loaded3D = true;
-  const s = document.createElement('script'); s.type = 'module'; s.src = 'ceu3d.js?v=22'; document.body.appendChild(s);
+  const s = document.createElement('script'); s.type = 'module'; s.src = 'ceu3d.js?v=23'; document.body.appendChild(s);
 }
 addEventListener('load', () => setTimeout(load3D, 4000));
 /* ---------- efeitos sonoros gerados por código (Web Audio, sem arquivos) ---------- */
@@ -667,12 +667,13 @@ gsap.to(cosmos, { zoom: 1, drift: 1.2, ease: 'none', scrollTrigger: { trigger: '
 /* ---------- 2. O céu 3D: o progresso da rolagem vai para ceu3d.js ---------- */
 window.CEU = { p: 0 };
 const ceuSeg = (p, a, b) => clamp01((p - a) / (b - a));
-ScrollTrigger.create({ trigger: '#ceu', start: 'top top', end: '+=600%', pin: true, scrub: true, refreshPriority: 90, onUpdate: s => {
-  const p = window.CEU.p = s.progress;
-  gsap.set('#dawn', { opacity: ceuSeg(p, .93, 1) }); // depois do mergulho na Terra, a página fica branca
+ScrollTrigger.create({ trigger: '#ceu', start: 'top top', end: '+=700%', pin: true, scrub: true, refreshPriority: 90, onUpdate: s => {
+  // a parte final (Terra/Guarapari) ganha 22% da rolagem: tempo para ler o card antes do clarão
+  const r = s.progress, p = window.CEU.p = r < .78 ? r / .78 * .86 : .86 + (r - .78) / .22 * .14;
+  gsap.set('#dawn', { opacity: ceuSeg(p, .975, 1) }); // depois do mergulho na Terra, a página fica branca
   const idx = p < .36 ? 0 : p < .56 ? 1 : p < .72 ? 2 : p < .86 ? 3 : 4;
   document.querySelectorAll('.cap').forEach((c, i) => {
-    const on = i === idx && p > .02 && p < .95;
+    const on = i === idx && p > .02 && p < .972;
     if (c._on !== on) { c._on = on; gsap.to(c, { opacity: on ? 1 : 0, y: on ? 0 : 12, duration: .6, ease: 'power2.out', overwrite: true }); }
   });
 } });

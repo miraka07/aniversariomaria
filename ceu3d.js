@@ -215,10 +215,10 @@ function frame() {
   tp.needsUpdate = true;
 
   // mergulho na Terra: Guarapari pulsa
-  const aDive = seg(p, .86, .96);
+  const aDive = seg(p, .86, .925); // mergulho; depois a câmera fica parada em Guarapari enquanto ela lê
   pulse.material.opacity = aDive * (.7 + Math.sin(t * 4) * .3);
   const ps = .25 + aDive * .25 + Math.sin(t * 4) * .05; pulse.scale.set(ps, ps, 1);
-  flash.style.opacity = seg(p, .93, 1);
+  flash.style.opacity = seg(p, .975, 1); // clarão só depois da leitura
 
   // alvos da câmera por fase
   if (p < .36) {
@@ -246,7 +246,7 @@ function frame() {
   camera.lookAt(camLook);
   // nome da cidade preso ao marcador na tela
   marker.getWorldPosition(projV).project(camera);
-  placeEl.style.opacity = seg(p, .88, .93) * (1 - seg(p, .955, .98));
+  placeEl.style.opacity = seg(p, .88, .92) * (1 - seg(p, .97, .985));
   placeEl.style.transform = 'translate(' + ((projV.x + 1) / 2 * canvas.clientWidth) + 'px,' + ((1 - projV.y) / 2 * canvas.clientHeight) + 'px)';
   composer.render();
 }
