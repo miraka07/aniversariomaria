@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Para você ♥</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,500&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root { --red:#c8102e; --wine:#7a0c1f; --rose:#f6d5da; --blush:#fff5f6; --ink:#2b1a1d; --soft:#6f5359; --night:#040822; }
@@ -108,8 +109,8 @@
   #assina { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:14vh 1rem 8vh; background:var(--blush); text-align:center; }
   .sign-wrap { position:relative; height:min(80vh, 880px); aspect-ratio:3/4; max-width:94vw; }
   .sign-photo { width:100%; height:100%; object-fit:cover; border-radius:18px; box-shadow:0 30px 60px -25px rgba(43,26,29,.45); }
-  .rumpel { position:absolute; left:62%; top:-7%; width:40%; aspect-ratio:1; border-radius:50%; overflow:hidden; box-shadow:0 0 0 4px rgba(255,255,255,.9), 0 14px 30px rgba(0,0,0,.35); }
-  .rumpel video { width:100%; height:100%; object-fit:cover; display:block; }
+  .rumpel { position:absolute; left:62%; top:-7%; width:40%; aspect-ratio:1; }
+  .rumpel img { width:100%; height:100%; display:block; }
   .bubble { position:absolute; left:3%; top:6%; max-width:40%; padding:.8rem 1.1rem; background:#fff; color:var(--ink); border:3px solid var(--ink); border-radius:22px;
     font:700 clamp(1.1rem, 3.4vw, 1.7rem)/1.15 Roboto, sans-serif; box-shadow:4px 5px 0 var(--ink); transform-origin:85% 100%; }
   .bubble::after { content:""; position:absolute; right:-16px; bottom:10px; border:12px solid transparent; border-left:18px solid var(--ink); }
@@ -218,7 +219,7 @@
 </div>
 
 <div id="gate">
-  <video class="gate-vid" src="futuro/abertura.mp4" poster="futuro/abertura-capa.jpg" autoplay muted loop playsinline webkit-playsinline disablepictureinpicture disableremoteplayback controlslist="nodownload nofullscreen noremoteplayback" preload="auto" aria-hidden="true"></video>
+  <video class="gate-vid" src="futuro/abertura.mp4" poster="futuro/abertura-capa.webp" autoplay muted loop playsinline webkit-playsinline disablepictureinpicture disableremoteplayback controlslist="nodownload nofullscreen noremoteplayback" preload="auto" aria-hidden="true"></video>
   <div class="gate-in">
     <h1>Você não esperava menos de um <em>desenvolvedor</em>, né?</h1>
     <img class="emo-inline gate-emo" src="emojis/emoji-por-favor.webp" alt="" aria-hidden="true">
@@ -299,7 +300,7 @@
     <span class="label">No cartório</span>
     <div class="sign-wrap">
       <img class="sign-photo" src="futuro/assinando.jpg" alt="Eu assinando no cartório">
-      <div class="rumpel"><video id="rumpelVid" src="futuro/assina.mp4" poster="futuro/assina-capa.jpg" muted playsinline webkit-playsinline disablepictureinpicture disableremoteplayback controlslist="nodownload nofullscreen noremoteplayback" preload="auto"></video></div>
+      <div class="rumpel"><img id="rumpelImg" src="futuro/assina-capa.webp" alt="Personagem dizendo: assina, Shrek!" width="400" height="400"></div>
       <div class="bubble" id="bubble">Assina, Shrek!</div>
     </div>
     <p class="sign-cap">E eu assinei kkkk ♥<img class="emo-inline" src="emojis/emoji-chorando-de-rir.webp" alt="" aria-hidden="true" loading="lazy"></p>
@@ -327,13 +328,13 @@
       <p>O tempo passou muito rápido, né? Esses dias falávamos que íamos casar brincando, e pra mim nunca foi uma brincadeira. Eu sempre quis ter alguém como você do lado: uma mulher linda, carismática e cuidadosa, talentosa e dedicada em tudo que faz. Nos meus sonhos, quando criança, era isso que eu sempre pedia a Deus: alguém firmeza com quem eu pudesse dividir a vida e ter certeza de que era o amor da minha vida.</p>
       <p>Esse texto não foi ensaiado, nenhuma linha dele foi planejada; é tudo que há no meu coração. Incrível saber que, em meio a um universo tão vasto, eu consegui encontrar minha metade, a mulher dos meus sonhos. O tempo passou rápido, mas o sentimento e o amor do início permanecem. Só devemos saber lapidá-lo ainda mais, pra fortalecer ainda mais.</p>
       <p>Há exatamente 1 ano você estava aqui gravando esse vídeo, deslumbrante como sempre, linda e gostosa, e foi um dia muito gostoso ao seu lado.</p>
-      <figure class="letter-media"><video src="futuro/espelho.mp4" poster="futuro/espelho-capa.jpg" muted loop playsinline webkit-playsinline disablepictureinpicture disableremoteplayback controlslist="nodownload nofullscreen noremoteplayback" preload="metadata"></video><figcaption>há exatamente 1 ano</figcaption></figure>
+      <figure class="letter-media"><video src="futuro/espelho.mp4" poster="futuro/espelho-capa.webp" muted loop playsinline webkit-playsinline disablepictureinpicture disableremoteplayback controlslist="nodownload nofullscreen noremoteplayback" preload="none"></video><figcaption>há exatamente 1 ano</figcaption></figure>
       <p>E espero que a data de hoje seja ainda mais, com pessoas importantes pra nós. Sei que a pessoa que você mais queria ver no seu aniversário é sua vó, até porque ela é uma das pessoas mais importantes, se não a mais importante. Mas, mesmo que ainda não a vejamos hoje, 08/11, ainda assim espero que seu dia seja cheio de alegria, cheio de amor.</p>
       <p>É impressionante como o tempo passou rápido, né? Um dia éramos namorados, no outro casamos. Estamos realizando nossos sonhos. Somos felizes e em breve formaremos uma família linda. Nossa casa, nossa vida é rodeada de bênçãos do Senhor; estamos nos alinhando para aquilo que já é nosso.</p>
       <p>Iremos juntos conhecer o mundo, novos países, novas cidades. Viveremos tudo aquilo que hoje é sonho. Tenho certeza de que o universo e Deus irão alinhar a realidade ao nosso favor, e é importante que nós estejamos juntos e cuidando um do outro até lá.</p>
       <p>Só tenho a agradecer e nada a reclamar, por ter você do lado, pelos momentos mais simples ao seu lado. E juramos que iríamos passar juntos, na alegria e na tristeza, na saúde e na doença, na pobreza e na riqueza, e assim permanecerá ❤️</p>
       <p>Esses dias você tava pegando nossa filha na caixa pra levar pra casa…</p>
-      <figure class="letter-media"><video src="futuro/mel.mp4" poster="futuro/mel-capa.jpg" muted loop playsinline webkit-playsinline disablepictureinpicture disableremoteplayback controlslist="nodownload nofullscreen noremoteplayback" preload="metadata"></video><figcaption>a Mel chegando</figcaption></figure>
+      <figure class="letter-media"><video src="futuro/mel.mp4" poster="futuro/mel-capa.webp" muted loop playsinline webkit-playsinline disablepictureinpicture disableremoteplayback controlslist="nodownload nofullscreen noremoteplayback" preload="none"></video><figcaption>a Mel chegando</figcaption></figure>
       <p>…hoje estamos em outra cidade, com uma motinha zero. Mesmo que antes ainda fosse só um sonho, comprar uma motinha, hoje realizamos. Você vê que as coisas vão se encaixando aos poucos, amor?</p>
       <figure class="letter-media print"><img src="futuro/moto.jpg" alt="Nossa conversa sobre comprar uma moto"><figcaption>quando ainda era só um sonho</figcaption><img class="emo" src="emojis/emoji-moto.webp" alt="" aria-hidden="true" loading="lazy" style="right:-12%; bottom:10%"></figure>
       <p>E estamos vivendo bem, sendo felizes. A verdade é que a vida só tem graça quando damos importância ao simples, damos importância pra aquilo que o dinheiro do mundo inteiro não pode comprar. Os momentos únicos que riqueza nenhuma pode comprar.</p>
@@ -390,7 +391,6 @@ const deckA = $('#deckA'), deckB = $('#deckB'), shrekAudio = $('#shrekAudio');
 // ?mute na URL silencia tudo (só para testes)
 const MUTE_TEST = /[?&]mute/.test(location.search);
 if (MUTE_TEST) document.querySelectorAll('audio, video').forEach(m => { m.muted = true; });
-$('#rumpelVid').muted = true; // a fala do Shrek sai pelo áudio separado; o vídeo é só imagem
 
 /* ---------- trilha: UMA música por vez ----------
    Por que assim: antes cada música tinha seu player e todas eram "acordadas" no primeiro toque.
@@ -498,6 +498,13 @@ const kick = () => {
   if (active && active.paused && !active.ended && !shrekOn) active.play().catch(() => {});
 };
 ['touchend', 'click', 'keydown'].forEach(ev => addEventListener(ev, kick, { passive: true }));
+// cena 3D (Three.js + texturas) só começa a baixar quando o presente é aberto: enquanto ela lê o universo, a cena carrega
+let loaded3D = false;
+function load3D() {
+  if (loaded3D) return; loaded3D = true;
+  const s = document.createElement('script'); s.type = 'module'; s.src = 'ceu3d.js?v=22'; document.body.appendChild(s);
+}
+addEventListener('load', () => setTimeout(load3D, 4000));
 /* ---------- efeitos sonoros gerados por código (Web Audio, sem arquivos) ---------- */
 function ac() {
   if (!actx) {
@@ -573,6 +580,7 @@ function paperOpen() {
 
 let giftOpened = false;
 $('#open').onclick = () => {
+  load3D();
   dropBass(); // efeito sonoro de entrada
   setTimeout(() => { giftOpened = true; }, 1500); // espera a volta ao topo terminar
   window.scrollTo(0, 0); // sempre começa do topo ao abrir o presente
@@ -989,7 +997,13 @@ fut.to('#phone', { scale: .9, rotation: 3, duration: .6 }, '+=.4')
 gsap.from('.fut-title .label, .fut-title h2', { opacity: 0, y: 40, stagger: .15, duration: 1.1, ease: 'power3.out', scrollTrigger: { trigger: '#futuro', start: 'top 80%' } });
 
 /* ---------- 4c. Cartório: o personagem cobra a assinatura ---------- */
-const rv = $('#rumpelVid');
+const rumpelImg = $('#rumpelImg');
+// a animação (WebP, toca 1 vez) é baixada quando a seção se aproxima; ao falar, vira um endereço novo para começar do quadro 1
+let shrekAnim = null;
+new IntersectionObserver((es, io) => { if (!es[0].isIntersecting) return; io.disconnect();
+  fetch('futuro/assina.webp').then(r => r.blob()).then(b => { shrekAnim = b; }).catch(() => {});
+}, { rootMargin: '1200px' }).observe($('#assina'));
+function shrekAnimate() { rumpelImg.src = shrekAnim ? URL.createObjectURL(shrekAnim) : 'futuro/assina.webp'; }
 // fala do Shrek: a música abaixa enquanto ele fala (ou pausa, se não houver controle de volume) e volta depois
 function shrekSay() {
   shrekOn = true; shrekAudio.currentTime = 0;
@@ -1002,17 +1016,16 @@ function shrekDone() {
 }
 shrekAudio.addEventListener('ended', shrekDone);
 function assina() {
-  rv.currentTime = 0;
   gsap.timeline()
     .to('.rumpel', { scale: 1, duration: .9, ease: 'elastic.out(1, .55)' })
     .to('#bubble', { scale: 1, duration: .6, ease: 'back.out(2.5)' }, '-=.4')
-    .add(() => { rv.play().catch(() => {}); shrekSay(); }, '-=.5')
+    .add(() => { shrekAnimate(); shrekSay(); setTimeout(shrekEnded, 3100); }, '-=.5')
     .to('#bubble', { rotation: 4, duration: .2, yoyo: true, repeat: 15, ease: 'sine.inOut' }, '<');
 }
-rv.addEventListener('ended', () => {
+function shrekEnded() {
   gsap.to('#bubble', { rotation: 0, duration: .3, overwrite: true });
   gsap.to('.sign-cap', { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out' });
-});
+}
 gsap.set('.sign-cap', { y: 20 }); gsap.set('.rumpel', { xPercent: -50, scale: 0 }); gsap.set('#bubble', { scale: 0 });
 gsap.from('#assina .sign-wrap', { opacity: 0, y: 60, scale: .95, duration: 1.4, ease: 'power3.out', scrollTrigger: { trigger: '#assina', start: 'top 70%' } });
 let rumpelShown = false;
@@ -1020,9 +1033,9 @@ function assinaPlay() {
   if (rumpelShown || !giftOpened) return; // a fala toca uma única vez, e só depois de abrir o presente
   const r = $('#assina .sign-wrap').getBoundingClientRect();
   if (r.bottom < 0 || r.top > innerHeight) return; // só quando a seção está mesmo na tela (não em saltos de rolagem)
-  rumpelShown = true; $('#rumpelVid')._wanted = true; assina();
+  rumpelShown = true; assina();
 }
-function assinaStop() { rv.pause(); if (shrekOn) { shrekAudio.pause(); shrekDone(); } gsap.to('#bubble', { rotation: 0, duration: .3, overwrite: true }); }
+function assinaStop() { if (shrekOn) { shrekAudio.pause(); shrekDone(); } gsap.to('#bubble', { rotation: 0, duration: .3, overwrite: true }); }
 ScrollTrigger.create({ trigger: '#assina .sign-wrap', start: 'top 70%', end: 'bottom 30%',
   onEnter: assinaPlay, onEnterBack: assinaPlay, onLeave: assinaStop, onLeaveBack: assinaStop });
 
@@ -1042,16 +1055,18 @@ function toDelacruz() { if (!worship || djavan) return; worship = false; if (cur
 $('#openLetter').onclick = () => {
   paperOpen(); // som de envelope de papel abrindo
   letterOpen = true;
+  // os vídeos da carta começam a baixar agora, em segundo plano: quando ela chegar neles, já estão prontos
+  document.querySelectorAll('.letter-media video').forEach(v => { v.preload = 'auto'; v.load(); });
   gsap.to('#stageDim', { opacity: .72, duration: 1.4 });
   $('#openLetter').style.display = 'none'; $('#lockMsg').style.display = 'none';
   // a carta e a troca de música são montadas já no clique; o envelope é só a animação por cima
   $('#letter').style.display = 'block';
-  gsap.set('#letter > *', { opacity: 0, y: 30 });
+  gsap.set('#letter > *', { opacity: 0, y: 30, filter: 'blur(8px)' });
   const relayout = () => { lenis && lenis.resize(); ScrollTrigger.refresh(); };
   relayout();
   // cada trecho da carta aparece quando chega na tela
   ScrollTrigger.batch('#letter > *', { start: 'top 88%', once: true,
-    onEnter: els => gsap.to(els, { opacity: 1, y: 0, stagger: .2, duration: 1.2, ease: 'power3.out' }) });
+    onEnter: els => gsap.to(els, { opacity: 1, y: 0, filter: 'blur(0px)', clearProps: 'filter', stagger: .2, duration: 1.2, ease: 'power3.out' }) });
   // troca de música pela rolagem: em "Deus faz milagres" o Delacruz sai e entra "Na terra como no céu" (3:40)
   ScrollTrigger.create({ trigger: '#milagre', start: 'top 75%', onEnter: toWorship, onEnterBack: toWorship, onLeaveBack: toDelacruz });
   // vídeos da carta só rodam quando estão na tela
@@ -1086,7 +1101,6 @@ gsap.to('.gate-emo', { y: -6, duration: 1.4, yoyo: true, repeat: -1, ease: 'sine
 // os gatilhos foram criados fora da ordem da página: ordena e recalcula as posições
 ScrollTrigger.sort(); ScrollTrigger.refresh();
 </script>
-<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
-<script type="module" src="ceu3d.js?v=21"></script>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
 </body>
 </html>

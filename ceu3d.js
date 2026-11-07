@@ -5,11 +5,12 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
-const TEX = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r170/examples/textures/planets/';
+const TEX = 'tex/'; // texturas servidas pelo próprio site, em WebP (mais leves e sem outro servidor)
 const canvas = document.getElementById('orrery3d');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 const LOW = matchMedia('(pointer: coarse)').matches || innerWidth < 800; // celular: menos pixels na cena 3D
 renderer.setPixelRatio(Math.min(LOW ? 1.25 : 1.75, devicePixelRatio));
+// celular: o bloom é calculado em resolução 1x (mesmo efeito, bem menos memória e GPU)
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.1;
 
@@ -19,6 +20,7 @@ const camera = new THREE.PerspectiveCamera(45, 1, 0.05, 3000);
 camera.position.set(0, 60, 80);
 
 const composer = new EffectComposer(renderer);
+if (LOW) composer.setPixelRatio(1);
 composer.addPass(new RenderPass(scene, camera));
 const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.55, 0.5, 0.35);
 composer.addPass(bloom);
@@ -75,7 +77,7 @@ const srgb = t => (t.colorSpace = THREE.SRGBColorSpace, t);
 
 P.forEach(p => {
   const mat = p.n === 'Terra'
-    ? new THREE.MeshStandardMaterial({ map: srgb(loader.load(TEX + 'earth_atmos_2048.jpg')), roughness: .8, metalness: 0 })
+    ? new THREE.MeshStandardMaterial({ map: srgb(loader.load(TEX + 'earth.webp')), roughness: .8, metalness: 0 })
     : new THREE.MeshStandardMaterial({ map: p.tex, roughness: 1, metalness: 0, emissive: new THREE.Color(0x000000) });
   p.mesh = new THREE.Mesh(new THREE.SphereGeometry(p.s, 64, 32), mat);
   scene.add(p.mesh);
@@ -86,7 +88,7 @@ P.forEach(p => {
 const earth = P[2].mesh, mars = P[3].mesh, venus = P[1];
 
 // nuvens + atmosfera da Terra
-const clouds = new THREE.Mesh(new THREE.SphereGeometry(1.012, 64, 32), new THREE.MeshStandardMaterial({ map: srgb(loader.load(TEX + 'earth_clouds_1024.png')), transparent: true, opacity: .8, depthWrite: false }));
+const clouds = new THREE.Mesh(new THREE.SphereGeometry(1.012, 64, 32), new THREE.MeshStandardMaterial({ map: srgb(loader.load(TEX + 'clouds.webp')), transparent: true, opacity: .8, depthWrite: false }));
 earth.add(clouds);
 const atmo = new THREE.Mesh(new THREE.SphereGeometry(1.12, 64, 32), new THREE.ShaderMaterial({
   transparent: true, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false,
@@ -96,7 +98,7 @@ const atmo = new THREE.Mesh(new THREE.SphereGeometry(1.12, 64, 32), new THREE.Sh
 earth.add(atmo);
 
 // Lua
-const moon = new THREE.Mesh(new THREE.SphereGeometry(.27, 48, 24), new THREE.MeshStandardMaterial({ map: srgb(loader.load(TEX + 'moon_1024.jpg')), roughness: 1 }));
+const moon = new THREE.Mesh(new THREE.SphereGeometry(.27, 48, 24), new THREE.MeshStandardMaterial({ map: srgb(loader.load(TEX + 'moon.webp')), roughness: 1 }));
 scene.add(moon);
 
 // Sol
@@ -162,7 +164,7 @@ new IntersectionObserver(es => visible = es[0].isIntersecting).observe(canvas);
 function resize() {
   const w = canvas.clientWidth, h = canvas.clientHeight;
   if (canvas.width !== Math.floor(w * renderer.getPixelRatio()) || canvas.height !== Math.floor(h * renderer.getPixelRatio())) {
-    renderer.setSize(w, h, false); if (!LOW) { composer.setSize(w, h); bloom.setSize(w, h); }
+    renderer.setSize(w, h, false); composer.setSize(w, h); bloom.setSize(w, h);
     camera.aspect = w / h; camera.updateProjectionMatrix();
   }
 }
@@ -246,6 +248,6 @@ function frame() {
   marker.getWorldPosition(projV).project(camera);
   placeEl.style.opacity = seg(p, .88, .93) * (1 - seg(p, .955, .98));
   placeEl.style.transform = 'translate(' + ((projV.x + 1) / 2 * canvas.clientWidth) + 'px,' + ((1 - projV.y) / 2 * canvas.clientHeight) + 'px)';
-  if (LOW) renderer.render(scene, camera); else composer.render(); // celular: sem bloom (as telas extras do bloom estouravam a memória do iPhone)
+  composer.render();
 }
 frame();
