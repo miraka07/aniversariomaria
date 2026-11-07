@@ -200,6 +200,17 @@
   .petal { position:absolute; top:-40px; pointer-events:none; color:#ff8fa3; }
 
   @media (max-width: 600px) { .rumpel { width:50%; left:64%; top:-6%; } .bubble { top:8%; } #gate .kicker { letter-spacing:.18em; font-size:.78rem; } }
+  /* PC (tela larga): fotos em pé aparecem inteiras, com a própria foto desfocada preenchendo as laterais; cards dos prints cabem na tela */
+  @media (min-width: 901px) and (min-aspect-ratio: 1/1) {
+    .polaroid img { object-fit:contain; background:url(fotos/blur/crianca.jpg) center/cover; }
+    .fut-bg { object-fit:contain; background:url(futuro/blur/jogar.jpg) center/cover; }
+    #wedding img { object-fit:contain; background:url(futuro/blur/casamento.jpg) center/cover; }
+    #wedding .w2 { background-image:url(futuro/blur/casamento2.jpg); }
+    .print-note { width:min(34vw, 500px); }
+    .print-note p { font-size:clamp(1.6rem, 2.2vw, 2.3rem); }
+    .print-note.long p { font-size:clamp(1.2rem, 1.5vw, 1.55rem); line-height:1.3; }
+    .note-emo { width:72px; }
+  }
   @media (prefers-reduced-motion: reduce) { .scroll-cue::after { animation:none; } }
 </style>
 </head>
